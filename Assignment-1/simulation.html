@@ -14,30 +14,43 @@ body{
 <script src="/home/thomas/media/school/natural-computing/artistoo/build/artistoo.js"></script>
 <script>
 "use strict"
+
 let config = {
     // Grid settings
     ndim : 2,
-    field_size : [100,100],
+    field_size : [150,100],
 
     // CPM parameters and configuration
     conf : {
         T : 20,			// CPM temperature
                 
         // Adhesion parameters:
-        J: [[0,20], [20,100]] ,
+        J: [[0,20,20], 
+            [20,100,20],
+            [20,20,100]] ,
         
         // VolumeConstraint parameters
-        LAMBDA_V : [0,50],	// VolumeConstraint importance per cellkind
-        V : [0,500]		// Target volume of each cellkind
+        LAMBDA_V : [0,50, 50],	// VolumeConstraint importance per cellkind
+        V : [0,500,250],	// Target volume of each cellkind
+
+        // Perimeter constraints
+        LAMBDA_P : [0,2,500],
+        P : [0,340,170],
+
+        // Act constraints
+        LAMBDA_ACT : [0,500,0],
+        MAX_ACT : [0,80,0],
+        ACT_MEAN : "geometric"
     },
 
     // Simulation setup and configuration
     simsettings : {
         // Cells on the grid
-        NRCELLS : [2],		// Number of cells to seed for all
-                    // non-background cellkinds.
+        NRCELLS : [5,0],		// Number of cells to seed for all
+        CELLCOLOR : ["000000", "990000"],            // non-background cellkinds.
         RUNTIME : 500,                // Only used in node
         CANVASCOLOR : "eaecef",
+        ACTCOLOR : "true",  
         zoom : 4		// zoom in on canvas with this factor.
     }
 }
