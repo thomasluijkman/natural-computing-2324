@@ -19,7 +19,7 @@ body{
 let config = {
     // Grid settings
     ndim : 2,
-    field_size : [150,100],
+    field_size : [200,200],
 
     // CPM parameters and configuration
     conf : {
@@ -27,8 +27,8 @@ let config = {
                 
         // Adhesion parameters:
         J: [[0,20,20], 
-            [20,100,20],
-            [20,20,100]] ,
+            [20,20,0],
+            [20,0,100]] ,
         
         // VolumeConstraint parameters
         LAMBDA_V : [0,50, 50],	// VolumeConstraint importance per cellkind
@@ -39,20 +39,22 @@ let config = {
         P : [0,340,120],
 
         // Act constraints
-        LAMBDA_ACT : [0,500,0],
-        MAX_ACT : [0,20,0],
+        LAMBDA_ACT : [0,140,0],
+        MAX_ACT : [0,80,0],
         ACT_MEAN : "geometric"
     },
 
     // Simulation setup and configuration
     simsettings : {
         // Cells on the grid
-        NRCELLS : [10,1],		// Number of cells to seed for all
-        CELLCOLOR : ["000000", "990000"],            // non-background cellkinds.
+        NRCELLS : [50,1],		// Number of cells to seed for all
+        CELLCOLOR : ["000000", "E62272"],            // non-background cellkinds.
         RUNTIME : 500,                // Only used in node
         CANVASCOLOR : "eaecef",
+        SHOWBORDERS : "true",
+        BORDERCOL : ["0000000", "ffffff"],
         ACTCOLOR : "true",  
-        zoom : 4		// zoom in on canvas with this factor.
+        zoom : 2		// zoom in on canvas with this factor.
     }
 }
 
@@ -73,25 +75,28 @@ function step(){
 }
 
 
-function initializeGrid(){
-	
+function initializeGrid(){	
     // add the initializer if not already there
     if( !this.helpClasses["gm"] ){ this.addGridManipulator() }
 
     let nrcells = this.conf["NRCELLS"], cellkind, i
+    let obstacleCellkind = 2
+    let movingCellkind = 1
     
+    // Seed epidermal cell layer
+	let step = 40
+	
+	for( let i = 20 ; i < this.C.extents[0] ; i += step ){
+		for( let j = 20 ; j < this.C.extents[1] ; j += step ){
+			this.gm.seedCellAt( obstacleCellkind, [i,j] )
+		}
+	}
+
     // Seed the right number of cells for each cellkind
-    for( cellkind = 0; cellkind < nrcells.length; cellkind ++ ){
-        
-        for( i = 0; i < nrcells[cellkind]; i++ ){
-            // first cell always at the midpoint. Any other cells
-            // randomly.				
-            if( i == 1 ){
-                this.gm.seedCellAt( cellkind+1, this.C.midpoint )
-            } else {
-                this.gm.seedCell( cellkind+1 )
-            }
-        }
+    for( i = 0; i < nrcells[movingCellkind-1]; i++ ){
+        // first cell always at the midpoint. Any other cells
+        // randomly.				
+        this.gm.seedCell(movingCellkind);
     }
 }
 
