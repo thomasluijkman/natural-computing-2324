@@ -11,7 +11,8 @@ body{
 </style>
 
 <!-- Sourcing the cpm build -->
-<script src="/home/thomas/media/school/natural-computing/artistoo/build/artistoo.js"></script>
+<script src="../artistoo/examples/html/artistoo.js"></script>
+<script src="../artistoo/examples/fpsmeter.min.js"></script>
 <script>
 "use strict"
 
@@ -31,22 +32,22 @@ let config = {
         
         // VolumeConstraint parameters
         LAMBDA_V : [0,50, 50],	// VolumeConstraint importance per cellkind
-        V : [0,500,250],	// Target volume of each cellkind
+        V : [0,500,500],	// Target volume of each cellkind
 
         // Perimeter constraints
         LAMBDA_P : [0,2,500],
-        P : [0,340,170],
+        P : [0,340,120],
 
         // Act constraints
         LAMBDA_ACT : [0,500,0],
-        MAX_ACT : [0,80,0],
+        MAX_ACT : [0,20,0],
         ACT_MEAN : "geometric"
     },
 
     // Simulation setup and configuration
     simsettings : {
         // Cells on the grid
-        NRCELLS : [5,0],		// Number of cells to seed for all
+        NRCELLS : [10,1],		// Number of cells to seed for all
         CELLCOLOR : ["000000", "990000"],            // non-background cellkinds.
         RUNTIME : 500,                // Only used in node
         CANVASCOLOR : "eaecef",
@@ -54,22 +55,52 @@ let config = {
         zoom : 4		// zoom in on canvas with this factor.
     }
 }
-let sim
+
+
+let sim, meter
 function initialize(){
-    sim = new CPM.Simulation( config )
+        let custommethods = {
+            initializeGrid : initializeGrid
+        }
+    sim = new CPM.Simulation( config, custommethods )
+    meter = new FPSMeter({left:"auto", right:"5px"})
     step()
 }
 function step(){
     sim.step()
+    meter.tick()
     requestAnimationFrame( step )
+}
+
+
+function initializeGrid(){
+	
+    // add the initializer if not already there
+    if( !this.helpClasses["gm"] ){ this.addGridManipulator() }
+
+    let nrcells = this.conf["NRCELLS"], cellkind, i
+    
+    // Seed the right number of cells for each cellkind
+    for( cellkind = 0; cellkind < nrcells.length; cellkind ++ ){
+        
+        for( i = 0; i < nrcells[cellkind]; i++ ){
+            // first cell always at the midpoint. Any other cells
+            // randomly.				
+            if( i == 1 ){
+                this.gm.seedCellAt( cellkind+1, this.C.midpoint )
+            } else {
+                this.gm.seedCell( cellkind+1 )
+            }
+        }
+    }
 }
 
 </script>
 </head>
 <body onload="initialize()">
-<h1>Your Page Title</h1>
+<h1>Fancy moving things with hopefully an obstacle</h1>
 <p>
-Description of your page.
+cell moving
 </p>
 </body>
 </html>
