@@ -1,0 +1,87 @@
+<!-- Page setup and title -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta http-equiv="Content-Type" content="text/html;
+charset=UTF-8">
+<title>CPM (no obstacles)</title>
+<style type="text/css"> 
+body{
+    font-family: "HelveticaNeue-Light", sans-serif; padding : 15px;
+}
+</style>
+
+<!-- Sourcing the cpm build -->
+<script src="../artistoo/examples/html/artistoo.js"></script>
+<script src="../artistoo/examples/fpsmeter.min.js"></script>
+<script>
+"use strict"
+
+let config = {
+    // Grid settings
+    ndim : 2,
+    field_size : [200,200],
+
+    // CPM parameters and configuration
+    conf : {
+        T : 20,			// CPM temperature
+                
+        // Adhesion parameters:
+        J: [[0,20,20], 
+            [20,20,0],
+            [20,0,100]] ,
+        
+        // VolumeConstraint parameters
+        LAMBDA_V : [0,50, 50],	// VolumeConstraint importance per cellkind
+        V : [0,500,500],	// Target volume of each cellkind
+
+        // Perimeter constraints
+        LAMBDA_P : [0,2,500],
+        P : [0,340,120],
+
+        // Act constraints
+        LAMBDA_ACT : [0,140,0],
+        MAX_ACT : [0,80,0],
+        ACT_MEAN : "geometric"
+    },
+
+    // Simulation setup and configuration
+    simsettings : {
+        // Cells on the grid
+        NRCELLS : [50],		// Number of cells to seed for all non-background cellkinds.
+        CELLCOLOR : ["000000", "E62272"],            
+        RUNTIME : 500,                // Only used in node
+        CANVASCOLOR : "eaecef",
+        SHOWBORDERS : "true",
+        BORDERCOL : ["0000000", "ffffff"],
+        ACTCOLOR : "true",  
+        zoom : 2		// zoom in on canvas with this factor.
+    }
+}
+
+
+let sim, meter
+function initialize(){
+    sim = new CPM.Simulation( config )
+    meter = new FPSMeter({left:"auto", right:"5px"})
+    step()
+}
+function step(){
+    sim.step()
+    meter.tick()
+    requestAnimationFrame( step )
+}
+
+</script>
+</head>
+<body onload="initialize()">
+<h1>Collective migration without obstacles</h1>
+<p>
+The graphic below shows a cellular Potts model simulating collective cell migration.<br>
+The moving cells have the following parameters:<br>
+Adhesion: 20<br>
+Volume: 500 (lambda: 50)<br>
+Perimeter: 340 (lambda: 2)<br>
+Max_act: 80 (lambda: 140)<br>
+</p>
+</body>
+</html>

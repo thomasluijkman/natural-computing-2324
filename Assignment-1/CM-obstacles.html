@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta http-equiv="Content-Type" content="text/html;
 charset=UTF-8">
-<title>PageTitle</title>
+<title>CPM (obstacles)</title>
 <style type="text/css"> 
 body{
     font-family: "HelveticaNeue-Light", sans-serif; padding : 15px;
@@ -11,7 +11,7 @@ body{
 </style>
 
 <!-- Sourcing the cpm build -->
-<script src="../artistoo/examples/html/artistoo.js"></script>
+<script src="../artistoo/build/artistoo.js"></script>
 <script src="../artistoo/examples/fpsmeter.min.js"></script>
 <script>
 "use strict"
@@ -83,19 +83,18 @@ function initializeGrid(){
     let obstacleCellkind = 2
     let movingCellkind = 1
     
-    // Seed epidermal cell layer
+    // distance parameter for obstacles
 	let step = 40
 	
+    // seed a number of different obstacles at regular intervals
 	for( let i = 20 ; i < this.C.extents[0] ; i += step ){
 		for( let j = 20 ; j < this.C.extents[1] ; j += step ){
 			this.gm.seedCellAt( obstacleCellkind, [i,j] )
 		}
 	}
 
-    // Seed the right number of cells for each cellkind
-    for( i = 0; i < nrcells[movingCellkind-1]; i++ ){
-        // first cell always at the midpoint. Any other cells
-        // randomly.				
+    // seed a determined number of moving cells in free locations
+    for( i = 0; i < nrcells[movingCellkind-1]; i++ ){			
         this.gm.seedCell(movingCellkind);
     }
 }
@@ -103,9 +102,20 @@ function initializeGrid(){
 </script>
 </head>
 <body onload="initialize()">
-<h1>Fancy moving things with hopefully an obstacle</h1>
-<p>
-cell moving
-</p>
+    <h1>Collective migration with obstacles</h1>
+    <p>
+    The graphic below shows a cellular Potts model simulating collective cell migration, 
+    with obstacles interrupting the collective migration patterns.<br>
+    The moving cells have the following parameters:<br>
+    Adhesion: 20<br>
+    Volume: 500 (lambda: 50)<br>
+    Perimeter: 340 (lambda: 2)<br>
+    Max_act: 80 (lambda: 140)<br>
+    The obstacles are also modelled as cells, they are just discouraged from changing
+    by using the following parameter set:<br>
+    Adhesion: 100<br>
+    Volume: 500 (lambda: 50)<br>
+    Perimeter: 120 (lambda: 500)<br>
+    </p>
 </body>
 </html>
