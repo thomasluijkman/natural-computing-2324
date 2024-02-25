@@ -1,7 +1,7 @@
 import sys
 import os
 import numpy as np
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import json
 
@@ -38,10 +38,9 @@ def plot_auc_scores(r_values, auc_scores, filename, test_nr):
         os.makedirs(parent_dir)
     plt.figure()
     plt.plot(r_values, auc_scores)
-    # plt.xlim([-0.01,7.01])
-    # plt.ylim([-0.01,1.01])
     plt.xlabel("r value")
     plt.ylabel("AUC Score")
+    plt.grid()
     plt.title(f"AUC scores for test{test_nr} file for different r-values")
     plt.savefig(filename)
 
@@ -96,7 +95,7 @@ def process_cert_test_file(filepath, write_to, index_json_file):
     index_train_file.close()
     return indexing
 
-def exercise2():
+def exercise2_cert(print_only_confusion=False, r_confusion=4):
     testfile_nr = 2
     alphabet = 'file://snd-cert.alpha'
     train_file = './syscalls/snd-cert/snd-cert.train'
@@ -109,16 +108,15 @@ def exercise2():
     with open(labels_file) as file:
         for line in file:
             labels.append(int(line.strip()))
-
     process_cert_train_file(train_file, new_train_file)
-    test3_indexing = process_cert_test_file(test_file, new_test_file, index_json_file)
+    test_indexing = process_cert_test_file(test_file, new_test_file, index_json_file)
     auc_scores = []
     r_values = range(1,8)
     for r in r_values:
         cert_results_per_chunk = perform_negsel(train_file=new_train_file, test_file=new_test_file, alphabet=alphabet, n=7, r=r)
         cert_results = []
-        for key in test3_indexing.keys():
-            cert_indeces = test3_indexing[key]
+        for key in test_indexing.keys():
+            cert_indeces = test_indexing[key]
             cert_values = np.array([cert_results_per_chunk[index] for index in cert_indeces])
             cert_results.append(np.mean(cert_values))
         fpr, tpr, _ = roc_curve(labels, cert_results)
@@ -132,6 +130,42 @@ def exercise2():
     auc_scores_filename = f'results/ex2/cert_test{testfile_nr}_aucscores.png'
     plot_auc_scores(r_values, auc_scores, auc_scores_filename, testfile_nr)
 
+def exercise2_unm():
+    testfile_nr = 2
+    alphabet_unm = 'file://snd-unm.alpha'
+    train_file_unm = './syscalls/snd-unm/snd-unm.train'
+    new_train_file_unm = 'snd-unm-processed.train'
+    test_file_unm = f'./syscalls/snd-unm/snd-unm.{testfile_nr}.test'
+    new_test_file_unm = f'snd-unm-processed.{testfile_nr}.test'
+    index_json_file_unm = f'./syscalls/snd-unm/snd-unm.{testfile_nr}.json'
+    labels_file_unm = f"./syscalls/snd-unm/snd-unm.{testfile_nr}.labels"
+    labels_unm = []
+    with open(labels_file_unm) as file:
+        for line in file:
+            labels_unm.append(int(line.strip()))
+    process_cert_train_file(train_file_unm, new_train_file_unm)
+    test_indexing_unm = process_cert_test_file(test_file_unm, new_test_file_unm, index_json_file_unm)
+    auc_scores_unm = []
+    r_values = range(7,8)
+    for r in r_values:
+        unm_results_per_chunk = perform_negsel(train_file=new_train_file_unm, test_file=new_test_file_unm, alphabet=alphabet_unm, n=7, r=r)
+        unm_results = []
+        for key in test_indexing_unm.keys():
+            unm_indeces = test_indexing_unm[key]
+            unm_values = np.array([unm_results_per_chunk[index] for index in unm_indeces])
+            unm_results.append(np.mean(unm_values))
+        fpr, tpr, _ = roc_curve(labels_unm, unm_results)
+        print(f"FPR: {fpr}")
+        print(f"TPR: {tpr}")
+        auc_roc = auc(fpr, tpr)
+        auc_scores_unm.append(auc_roc)
+        title = f'ROC curve for r = {r} (AUC = {"{:.4f}".format(auc_roc)})'
+        filename = f'results/ex2/unm_test{testfile_nr}_r_{r}.png'
+        plot_roccurve_with_auc(fpr, tpr, filename, title)
+    auc_scores_filename = f'results/ex2/unm_test{testfile_nr}_aucscores.png'
+    plot_auc_scores(r_values, auc_scores_unm, auc_scores_filename, testfile_nr)
+
 if __name__ == '__main__':
-    #exercise1()
-    exercise2()
+    exercise1()
+    exercise2_cert()
+    exercise2_unm()
