@@ -19,7 +19,7 @@ def perform_negsel(train_file, test_file,
     data = [float(line.strip()) for line in stream.readlines()]
     return data
 
-def plot_auc(fpr, tpr, filename, title=""):
+def plot_roccurve_with_auc(fpr, tpr, filename, title=""):
     parent_dir = "/".join(filename.split('/')[:-1])
     if not os.path.exists(parent_dir):
         os.makedirs(parent_dir)
@@ -32,6 +32,19 @@ def plot_auc(fpr, tpr, filename, title=""):
     plt.title(title)
     plt.savefig(filename)
 
+def plot_auc_scores(r_values, auc_scores, filename, test_nr):
+    parent_dir = "/".join(filename.split('/')[:-1])
+    if not os.path.exists(parent_dir):
+        os.makedirs(parent_dir)
+    plt.figure()
+    plt.plot(r_values, auc_scores)
+    # plt.xlim([-0.01,7.01])
+    # plt.ylim([-0.01,1.01])
+    plt.xlabel("r value")
+    plt.ylabel("AUC Score")
+    plt.title(f"AUC scores for test{test_nr} file for different r-values")
+    plt.savefig(filename)
+
 def exercise1():
     for r in range(1,10):
         print(f'Performing negative selection on English and Tagalog strings... (r={r})')
@@ -42,7 +55,7 @@ def exercise1():
         auc_roc = auc(fpr, tpr)
         title = f'ROC curve for r = {r} (AUC = {"{:.4f}".format(auc_roc)})'
         filename = f'results/ex1/english-tagalog_r_{r}.png'
-        plot_auc(fpr, tpr, filename, title)
+        plot_roccurve_with_auc(fpr, tpr, filename, title)
 
 # We select 7, because length of the shortest syscall is 7
 chunk_length = 7
@@ -84,13 +97,14 @@ def process_cert_test_file(filepath, write_to, index_json_file):
     return indexing
 
 def exercise2():
+    testfile_nr = 2
     alphabet = 'file://snd-cert.alpha'
     train_file = './syscalls/snd-cert/snd-cert.train'
     new_train_file = 'snd-cert-processed.train'
-    test_file = './syscalls/snd-cert/snd-cert.1.test'
-    new_test_file = 'snd-cert-processed.1.test'
-    index_json_file = './syscalls/snd-cert/snd-cert.1.json'
-    labels_file = "./syscalls/snd-cert/snd-cert.1.labels"
+    test_file = f'./syscalls/snd-cert/snd-cert.{testfile_nr}.test'
+    new_test_file = f'snd-cert-processed.{testfile_nr}.test'
+    index_json_file = f'./syscalls/snd-cert/snd-cert.{testfile_nr}.json'
+    labels_file = f"./syscalls/snd-cert/snd-cert.{testfile_nr}.labels"
     labels = []
     with open(labels_file) as file:
         for line in file:
@@ -98,8 +112,9 @@ def exercise2():
 
     process_cert_train_file(train_file, new_train_file)
     test3_indexing = process_cert_test_file(test_file, new_test_file, index_json_file)
-
-    for r in range(4,5):
+    auc_scores = []
+    r_values = range(1,8)
+    for r in r_values:
         cert_results_per_chunk = perform_negsel(train_file=new_train_file, test_file=new_test_file, alphabet=alphabet, n=7, r=r)
         cert_results = []
         for key in test3_indexing.keys():
@@ -110,9 +125,12 @@ def exercise2():
         print(f"FPR: {fpr}")
         print(f"TPR: {tpr}")
         auc_roc = auc(fpr, tpr)
+        auc_scores.append(auc_roc)
         title = f'ROC curve for r = {r} (AUC = {"{:.4f}".format(auc_roc)})'
-        filename = f'results/ex2/cert_test3_r_{r}.png'
-        plot_auc(fpr, tpr, filename, title)
+        filename = f'results/ex2/cert_test{testfile_nr}_r_{r}.png'
+        plot_roccurve_with_auc(fpr, tpr, filename, title)
+    auc_scores_filename = f'results/ex2/cert_test{testfile_nr}_aucscores.png'
+    plot_auc_scores(r_values, auc_scores, auc_scores_filename, testfile_nr)
 
 if __name__ == '__main__':
     #exercise1()
