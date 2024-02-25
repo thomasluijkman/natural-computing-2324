@@ -1,9 +1,10 @@
-import sys
 import os
 import numpy as np
 from sklearn.metrics import roc_curve, auc, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import json
+
+LANGUAGES = ['Hiligaynon', 'Middle-English', 'Plautdietsch', 'Xhosa']
 
 def gen_labels_ex1(results_a, results_b):
     combined_results = np.concatenate([results_a, results_b])
@@ -13,7 +14,7 @@ def gen_labels_ex1(results_a, results_b):
     return (combined_results, labels)
 
 def perform_negsel(train_file, test_file, 
-                    alphabet='file://english.train', n=10, r=4, save_results=False):
+                    alphabet='file://english.train', n=10, r=4):
     command = f'java -jar negsel2.jar -alphabet {alphabet} -self {train_file} -n {n} -r {r} -c -l < {test_file}'
     stream = os.popen(command)
     data = [float(line.strip()) for line in stream.readlines()]
@@ -26,25 +27,52 @@ def plot_roccurve_with_auc(fpr, tpr, filename, title=""):
     plt.figure()
     plt.plot(fpr, tpr, color='red', lw=2)
     plt.plot([0,1],[0,1], color='black', linestyle='--')
-    plt.xlim([-0.01,1.01])
-    plt.ylim([-0.01,1.01])
+    plt.xlim(-0.01,1.01)
+    plt.ylim(-0.01,1.01)
+    plt.xlabel('1-specificity')
+    plt.ylabel('sensitivity')
     plt.grid()
     plt.title(title)
     plt.savefig(filename)
 
-def plot_auc_scores(r_values, auc_scores, filename, test_nr):
+def plot_auc_scores(r_values, auc_scores, filename, title):
     parent_dir = "/".join(filename.split('/')[:-1])
     if not os.path.exists(parent_dir):
         os.makedirs(parent_dir)
     plt.figure()
     plt.plot(r_values, auc_scores)
-    plt.xlabel("r value")
+    plt.xlabel("r values")
     plt.ylabel("AUC Score")
     plt.grid()
-    plt.title(f"AUC scores for test{test_nr} file for different r-values")
+    plt.title(title)
     plt.savefig(filename)
 
+def compare_languages():
+    if not os.path.exists('results/ex1'):
+        os.makedirs('results/ex1')
+    r = 3
+    english_results = perform_negsel('english.train', 'english.test', r=r)
+    plt.figure()
+    plt.plot([0,1], [0,1], color='black', linestyle='--')
+    for language in LANGUAGES:
+        print(f'Performing negative selection on English and {language} strings... (r={r})')
+        language_results = perform_negsel('english.train', f'lang/{language.lower()}.txt', r=r)
+        combined, labels = gen_labels_ex1(english_results, language_results)
+        fpr, tpr, _ = roc_curve(labels, combined)
+        auc_roc = auc(fpr,tpr)
+        plt.plot(fpr, tpr, lw = 2, label=f'{language} (AUC={"{:.2f}".format(auc_roc)})')
+    plt.xlabel('1-specificity')
+    plt.ylabel('sensitivity')
+    plt.xlim(-0.01,1.01)
+    plt.ylim(-0.01,1.01)
+    plt.grid()
+    plt.legend()
+    plt.title('Negative selection performed on classifying English vs. other languages')
+    plt.savefig(f'results/ex1/english-other_r_{r}.png')
+        
+
 def exercise1():
+    auc_scores = []
     for r in range(1,10):
         print(f'Performing negative selection on English and Tagalog strings... (r={r})')
         english_results = perform_negsel('english.train', 'english.test', r=r)
@@ -52,9 +80,12 @@ def exercise1():
         combined, labels = gen_labels_ex1(english_results, tagalog_results)
         fpr, tpr, _ = roc_curve(labels, combined)
         auc_roc = auc(fpr, tpr)
+        auc_scores.append(auc_roc)
         title = f'ROC curve for r = {r} (AUC = {"{:.4f}".format(auc_roc)})'
         filename = f'results/ex1/english-tagalog_r_{r}.png'
         plot_roccurve_with_auc(fpr, tpr, filename, title)
+    plot_auc_scores(range(1,10), auc_scores, f'results/ex1/english-tagalog-auc.png', "AUC scores for different values of r")
+    compare_languages()
 
 # We select 7, because length of the shortest syscall is 7
 chunk_length = 7
