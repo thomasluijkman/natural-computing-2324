@@ -1,4 +1,3 @@
-import sys
 import os
 import numpy as np
 from sklearn.metrics import roc_curve, auc
@@ -15,7 +14,7 @@ def gen_labels_ex1(results_a, results_b):
     return (combined_results, labels)
 
 def perform_negsel(train_file, test_file, 
-                    alphabet='file://english.train', n=10, r=4, save_results=False):
+                    alphabet='file://english.train', n=10, r=4):
     command = f'java -jar negsel2.jar -alphabet {alphabet} -self {train_file} -n {n} -r {r} -c -l < {test_file}'
     stream = os.popen(command)
     data = [float(line.strip()) for line in stream.readlines()]
@@ -52,7 +51,6 @@ def compare_languages():
     if not os.path.exists('results/ex1'):
         os.makedirs('results/ex1')
     r = 3
-    all_results = []
     english_results = perform_negsel('english.train', 'english.test', r=r)
     plt.figure()
     plt.plot([0,1], [0,1], color='black', linestyle='--')
@@ -61,8 +59,6 @@ def compare_languages():
         language_results = perform_negsel('english.train', f'lang/{language.lower()}.txt', r=r)
         combined, labels = gen_labels_ex1(english_results, language_results)
         fpr, tpr, _ = roc_curve(labels, combined)
-        print(fpr)
-        print(tpr)
         auc_roc = auc(fpr,tpr)
         plt.plot(fpr, tpr, lw = 2, label=f'{language} (AUC={"{:.2f}".format(auc_roc)})')
     plt.xlabel('1-specificity')
@@ -87,7 +83,7 @@ def exercise1():
         auc_scores.append(auc_roc)
         title = f'ROC curve for r = {r} (AUC = {"{:.4f}".format(auc_roc)})'
         filename = f'results/ex1/english-tagalog_r_{r}.png'
-        plot_auc(fpr, tpr, filename, title)
+        plot_roccurve_with_auc(fpr, tpr, filename, title)
     plot_auc_scores(auc_scores, f'results/ex1/english-tagalog-auc.png')
     compare_languages()
 
@@ -167,6 +163,5 @@ def exercise2():
     plot_auc_scores(r_values, auc_scores, auc_scores_filename, testfile_nr)
 
 if __name__ == '__main__':
-    compare_languages()
-    #exercise1()
+    exercise1()
     #exercise2()
