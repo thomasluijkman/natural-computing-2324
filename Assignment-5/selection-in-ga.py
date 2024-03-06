@@ -65,6 +65,7 @@ def main():
     ga_v2(bitstring)
     plt.xlabel('Generation')
     plt.ylabel('Fitness')
+    plt.xlim(0,1500)
     plt.grid()
     plt.legend()
     plt.savefig('results/ex2/graph.png')
