@@ -38,6 +38,13 @@ def calc_population_fitness(population):
         pop_fitness.append(fitness(individual, TARGET))
     return pop_fitness
 
+def get_parents_with_fitness(pop_with_fitness):
+    sample = random.choices(pop_with_fitness, k=K)
+    parent0 = max(sample, key=lambda item: item[1])[0]
+    sample = random.choices(pop_with_fitness, k=K)
+    parent1 = max(sample, key=lambda item: item[1])[0]
+    return (parent0, parent1)
+
 def find_fittest(population):
     max_fitness = 0
     index = 0
@@ -78,9 +85,10 @@ def string_search_ga(verbose=True):
         new_population = []
         # Step 2: Determine fitness for every solution
         pop_fitness = calc_population_fitness(population)
+        pop_with_fitness = list(zip(population, pop_fitness))
         for _ in range(int(POP_SIZE / 2)):
             # Step 3: Select parents for new generation
-            parents = random.choices(population, pop_fitness, k=K)
+            parents = get_parents_with_fitness(pop_with_fitness)
             # Step 4a: Introduce variation via crossover
             new_population += crossover(parents[0], parents[1])
         assert(len(new_population) == POP_SIZE)
@@ -91,9 +99,9 @@ def string_search_ga(verbose=True):
 
 
 def run_experiment():
-    converged = string_search_ga(verbose=False)
+    converged = string_search_ga(verbose=True)
     if(converged >= 0):
-        print(f"Converged after {str(converged+1)} generations.")
+        print(f"Converged after {str(converged)} generations.")
 
 def main():
     if not os.path.exists('results/ex3'):
