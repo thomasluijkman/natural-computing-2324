@@ -10,7 +10,7 @@ ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 P_C = 1
 MU = 1.0 / TARGET_LENGTH
 POP_SIZE = 200
-MAX_GENS = 100
+MAX_GENS = 1000000
 
 # Fitness function
 def string_similarity(a, b):
@@ -58,7 +58,7 @@ def crossover(a, b):
 def mutate(a):
     mutated = ''
     for i in range(len(a)):
-        if random.random() < MU:
+        if random.random() <= MU:
             mutated += random.choice(ALPHABET)
         else:
             mutated += a[i]
@@ -68,7 +68,8 @@ def string_search_ga(verbose=True):
     # Step 1: Population of candidate solutions
     population = initialise_population()
     # Repeat steps 2-4
-    for i in range(MAX_GENS):
+    i = 0
+    while i < MAX_GENS:
         max_fitness, fittest_index = find_fittest(population)
         if verbose:
             print(f'Closest string in generation {i}:\t{population[fittest_index]} (fitness: {max_fitness})')
@@ -79,17 +80,20 @@ def string_search_ga(verbose=True):
         pop_fitness = calc_population_fitness(population)
         for _ in range(int(POP_SIZE / 2)):
             # Step 3: Select parents for new generation
-            parents = random.choices(population, pop_fitness, k=2)
+            parents = random.choices(population, pop_fitness, k=K)
             # Step 4a: Introduce variation via crossover
             new_population += crossover(parents[0], parents[1])
         assert(len(new_population) == POP_SIZE)
         # Step 4b: Introduce variation via mutation
         population = [mutate(individual) for individual in new_population]
+        i += 1
     return -1 # negative return means max generations were reached without target string being found
 
 
 def run_experiment():
-    string_search_ga()
+    converged = string_search_ga(verbose=False)
+    if(converged >= 0):
+        print(f"Converged after {str(converged+1)} generations.")
 
 def main():
     if not os.path.exists('results/ex3'):

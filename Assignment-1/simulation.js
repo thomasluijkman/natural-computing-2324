@@ -1,4 +1,4 @@
-let CPM = require("/home/thomas/media/school/natural-computing/artistoo/build/artistoo-cjs.js") 
+let CPM = require("../artistoo/build/artistoo.js") 
 
 let config = {
 
