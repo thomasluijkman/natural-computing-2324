@@ -3,6 +3,7 @@ import random
 import matplotlib.pyplot as plt
 
 # Parameters
+SEED = 42
 K = 2
 TARGET = 'ThisStuffIsHard'
 TARGET_LENGTH = len(TARGET)
@@ -10,7 +11,18 @@ ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 P_C = 1
 MU = 1.0 / TARGET_LENGTH
 POP_SIZE = 200
-MAX_GENS = 1000000
+MAX_GENS = 200
+
+def print_parameters():
+    print_string = f"""Running evolutionary algorithm with the following parameters:
+K               = {K}
+Target          = {TARGET}
+Alphabet        = {ALPHABET}
+P_C             = {P_C}
+mu              = {MU}
+Population size = {POP_SIZE}
+    """
+    print(print_string)
 
 # Fitness function
 def string_similarity(a, b):
@@ -69,9 +81,9 @@ def mutate(a):
             mutated += random.choice(ALPHABET)
         else:
             mutated += a[i]
-    return a
+    return mutated
 
-def string_search_ga(verbose=True):
+def string_search_ga(verbose=False):
     # Step 1: Population of candidate solutions
     population = initialise_population()
     # Repeat steps 2-4
@@ -95,19 +107,45 @@ def string_search_ga(verbose=True):
         # Step 4b: Introduce variation via mutation
         population = [mutate(individual) for individual in new_population]
         i += 1
-    return -1 # negative return means max generations were reached without target string being found
+    return -10 # negative return means max generations were reached without target string being found
 
 
-def run_experiment():
-    converged = string_search_ga(verbose=True)
-    if(converged >= 0):
-        print(f"Converged after {str(converged)} generations.")
+def run_experiment(no_experiments=10, verbose=True):
+    global MU
+    # K = 2, MU = 1/L
+    initial_params = []
+    if verbose:
+        print_parameters()
+    for i in range(no_experiments):
+        if verbose:
+            print(f"Running experiment {i} in current parameter set")
+        initial_params.append(string_search_ga())
+    
+    # MU = 0
+    MU = 0
+    no_mutation = []
+    if verbose:
+        print_parameters()
+    for i in range(no_experiments):
+        if verbose:
+            print(f"Running experiment {i} in current parameter set")
+        no_mutation.append(string_search_ga())
+
+    # MU = 3/L
+    MU = 3.0 / TARGET_LENGTH
+    wild_mutation = []
+    if verbose:
+        print_parameters()
+    for i in range(no_experiments):
+        if verbose:
+            print(f"Running experiment {i} in current parameter set")
+        wild_mutation.append(string_search_ga())
 
 def main():
+    random.seed(SEED)
     if not os.path.exists('results/ex3'):
         os.makedirs('results/ex3')
     run_experiment()
-    
 
 if __name__ == '__main__':
     main()
