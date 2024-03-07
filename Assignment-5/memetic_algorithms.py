@@ -65,8 +65,8 @@ def crossover(parent1, parent2):
         raise Exception("Parents are different size")
     cut_points = []
     while len(cut_points) == 0:
-        rand1 = random.randrange(0, len(parent1))
-        rand2 = random.randrange(0, len(parent1))
+        rand1 = random.randrange(1, len(parent1))
+        rand2 = random.randrange(1, len(parent1))
         if rand1 != rand2:
             if rand1 < rand2:
                 cut_points += [rand1, rand2]
@@ -76,8 +76,8 @@ def crossover(parent1, parent2):
     parent2_keep = parent2[cut_points[0]:cut_points[1]]
     parent1_complements = [e for e in parent1 if e not in parent2_keep]
     parent2_complements = [e for e in parent2 if e not in parent1_keep]
-    child1 = parent2_complements[:cut_points[0]] + parent1_keep + parent2_complements[-(len(parent1)-rand2):]
-    child2 = parent1_complements[:cut_points[0]] + parent2_keep + parent1_complements[-(len(parent1)-rand2):]
+    child1 = parent2_complements[-(cut_points[0]):] + parent1_keep + parent2_complements[:(len(parent1) - cut_points[1])]
+    child2 = parent1_complements[-(cut_points[0]):] + parent2_keep + parent1_complements[:(len(parent1) - cut_points[1])]
     return cut_points, child1, child2
 
 
@@ -89,11 +89,11 @@ if __name__ == "__main__":
     cities = load_cities_from_file(filename)
 
     cut_points, chil1, child2 = crossover([3, 5, 7,  2, 1, 6, 4, 8], [2, 5,7, 6, 8, 1,3, 4])
-    print(f"Cut points: {str(cut_points)}")
+    print(f"Cutoffs: {str(cut_points)}")
     print(f"Cchild1: {str(chil1)}")
     print(f"Child2: {str(child2)}")
     # Calculate distance matrix
-    distances = calculate_distance_matrix(cities)
+    """distances = calculate_distance_matrix(cities)
     
     # Set parameters
     num_generations = 100
@@ -116,4 +116,4 @@ if __name__ == "__main__":
     plt.xlim(0,num_generations+1)
     plt.grid()
     plt.legend()
-    plt.savefig('results/ex4/fitness.png')
+    plt.savefig('results/ex4/fitness.png')"""
