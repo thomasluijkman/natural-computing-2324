@@ -41,10 +41,12 @@ def total_distance(tour, distances):
 # Function for 2-opt local search
 def two_opt(tour, distances, max_generation):
     distance = total_distance(tour, distances)
+    # distances = []
+    fitness_scores = []
     fitness_score = 0
     improved = True
     gen = 0
-    while improved:
+    while improved and gen < 1500:
         improved = False
         for i in range(1, len(tour) - 2):
             for j in range(i + 1, len(tour)):
@@ -56,8 +58,11 @@ def two_opt(tour, distances, max_generation):
                     tour = new_tour
                     improved = True
         distance = total_distance(tour, distances)
-        fitness_score = 1/distance
-    return tour, distance, fitness_score
+        # distances.append(distance)
+        fitness_scores.append(1/distance)
+        gen += 1
+    print(f"finished two opt after {gen} gernations")
+    return tour, distance, fitness_scores
 
 # ================= Evolutionary algorithm =================
 def crossover(parent1, parent2):
@@ -93,27 +98,29 @@ if __name__ == "__main__":
     print(f"Cchild1: {str(chil1)}")
     print(f"Child2: {str(child2)}")
     # Calculate distance matrix
-    """distances = calculate_distance_matrix(cities)
+    distances = calculate_distance_matrix(cities)
     
     # Set parameters
-    num_generations = 100
+    num_generations = 1500
     population_size = 50
     tournament_size = 5
     
     # Call the memetic algorithm function
     best_solution, best_distance, fitness_scores = two_opt(cities, distances, num_generations)
     
+    print(fitness_scores)
     print("Best solution:", best_solution)
     print("Best distance:", best_distance)
 
     if not os.path.exists('results/ex4'):
         os.makedirs('results/ex4')
 
-    plt.figure()
-    plt.plot(range(num_generations), fitness_scores, color='red', label='Memetic algorithm')
-    plt.xlabel('Generation')
-    plt.ylabel('Fitness')
-    plt.xlim(0,num_generations+1)
-    plt.grid()
-    plt.legend()
-    plt.savefig('results/ex4/fitness.png')"""
+    # plt.figure()
+    # plt.plot(range(num_generations), fitness_scores, color='red', label='Memetic algorithm')
+    # plt.xlabel('Generation')
+    # plt.ylabel('Fitness')
+    # # plt.xlim(0,num_generations+1)
+    # # plt.
+    # plt.grid()
+    # plt.legend()
+    # plt.savefig('results/ex4/fitness.png')
