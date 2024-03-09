@@ -4,6 +4,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+SEED = 42
+
 # ================= Memetic algorithm =================
 # Function to calculate the distance between two cities
 def calculate_distance(city1, city2):
@@ -41,9 +43,7 @@ def total_distance(tour, distances):
 # Function for 2-opt local search
 def two_opt(tour, distances, max_generation):
     distance = total_distance(tour, distances)
-    # distances = []
     fitness_scores = []
-    fitness_score = 0
     improved = True
     gen = 0
     while improved and gen < 1500:
@@ -58,16 +58,68 @@ def two_opt(tour, distances, max_generation):
                     tour = new_tour
                     improved = True
         distance = total_distance(tour, distances)
-        # distances.append(distance)
         fitness_scores.append(1/distance)
         gen += 1
     print(f"finished two opt after {gen} gernations")
     return tour, distance, fitness_scores
 
 # ================= Evolutionary algorithm =================
+def fitness(individual, distances):
+    tour_distance = total_distance(individual, distances)
+    return 1 / tour_distance
+
+def initialise_population(tour, population_size):
+    population = []
+    for _ in range(population_size):
+        city_list = tour.copy()
+        random.shuffle(city_list)
+        population.append(city_list)
+    return population
+
+def find_fittest(population, distances):
+    max_fitness = 0
+    index = 0
+    for i in range(len(population)):
+        this_fitness = fitness(population[i], distances)
+        if this_fitness > max_fitness:
+            max_fitness = this_fitness
+            index = i
+    return max_fitness, index
+
+def calc_population_fitness(population, distances):
+    pop_fitness = []
+    for individual in population:
+        pop_fitness.append(fitness(individual, distances))
+    return pop_fitness
+
+def get_parents_with_fitness(pop_with_fitness, tournament_size):
+    sample = random.choices(pop_with_fitness, k=tournament_size)
+    parent0 = max(sample, key=lambda item: item[1])[0]
+    sample = random.choices(pop_with_fitness, k=tournament_size)
+    parent1 = max(sample, key=lambda item: item[1])[0]
+    return (parent0, parent1)
+
+def mutate(individual, mu):
+    mutated = []
+    if random.random() <= mu:
+        mutation_loc1 = 0
+        mutation_loc2 = 0
+        while True:
+            rand1 = random.randrange(1, len(individual))
+            rand2 = random.randrange(1, len(individual))
+            if rand1 != rand2:
+                mutation_loc1 = rand1
+                mutation_loc2 = rand2
+                break
+        mutated = individual.copy()
+        mutated[mutation_loc1] = individual[mutation_loc2]
+        mutated[mutation_loc2] = individual[mutation_loc1]
+    else:
+        mutated = individual
+    return mutated
+
 def crossover(parent1, parent2):
-    if len(parent1) != len(parent2):
-        raise Exception("Parents are different size")
+    assert(len(parent1) == len(parent2))
     cut_points = []
     while len(cut_points) == 0:
         rand1 = random.randrange(1, len(parent1))
@@ -83,20 +135,65 @@ def crossover(parent1, parent2):
     parent2_complements = [e for e in parent2 if e not in parent1_keep]
     child1 = parent2_complements[-(cut_points[0]):] + parent1_keep + parent2_complements[:(len(parent1) - cut_points[1])]
     child2 = parent1_complements[-(cut_points[0]):] + parent2_keep + parent1_complements[:(len(parent1) - cut_points[1])]
-    return cut_points, child1, child2
+    return child1, child2
 
+def tsp_ea(tour, distances, generations, population_size, tournament_size, mu):
+    # Step 1: Population of candidate solutions
+    population = initialise_population(tour, population_size)
+    # Repeat steps 2-4
+    i = 0
+    while i < generations:
+        new_population = []
+        # Step 2: Determine fitness for every solution
+        pop_fitness = calc_population_fitness(population, distances)
+        pop_with_fitness = list(zip(population, pop_fitness))
+        for _ in range(int(population_size / 2)):
+            # Step 3: Select parents for new generation
+            parents = get_parents_with_fitness(pop_with_fitness, tournament_size)
+            # Step 4a: Introduce variation via crossover
+            new_population += crossover(parents[0], parents[1])
+        assert(len(new_population) == population_size)
+        if mu > 0:
+            population = [mutate(individual, mu) for individual in new_population]
+        else:
+            population = new_population.copy()
+        i += 1
+    max_fitness, index = find_fittest(population, distances)
+    best_tour = population[index]
+    best_distance = total_distance(best_tour, distances)
+    print(f"finished evolutionary algorithm after {generations} generations")
+    return best_tour, best_distance, max_fitness 
 
+# Code was adapted from: https://stackoverflow.com/questions/47719924/reading-in-tsp-file-python
+def load_tsp_file(filename):
+    cities = []
+    with open(filename, 'r') as f:
+        _ = f.readline() # NAME
+        _ = f.readline() # TYPE
+        _ = f.readline() # COMMENT
+        dimension = f.readline().strip().split(":")[1] # DIMENSION
+        line = ""
+        while line != "DISPLAY_DATA_SECTION":
+            line = f.readline().strip()
+
+        # Read node list
+        for _ in range(int(dimension)):
+            index, x, y = f.readline().strip().split()
+            cities.append((int(index)-1, [float(x), float(y)]))
+
+    assert(len(cities) != 0)
+    return cities
 
 # Example usage:
 if __name__ == "__main__":
     # Load cities from file
+    random.seed(SEED)
+    
     filename = "file-tsp.txt"
+    print(f"Load data from {filename} and solve TSP problem.")
     cities = load_cities_from_file(filename)
 
-    cut_points, chil1, child2 = crossover([3, 5, 7,  2, 1, 6, 4, 8], [2, 5,7, 6, 8, 1,3, 4])
-    print(f"Cutoffs: {str(cut_points)}")
-    print(f"Cchild1: {str(chil1)}")
-    print(f"Child2: {str(child2)}")
+
     # Calculate distance matrix
     distances = calculate_distance_matrix(cities)
     
@@ -104,23 +201,54 @@ if __name__ == "__main__":
     num_generations = 1500
     population_size = 50
     tournament_size = 5
-    
+    mu = 0.01
+
     # Call the memetic algorithm function
     best_solution, best_distance, fitness_scores = two_opt(cities, distances, num_generations)
+
+    # Call evolutionary algorithm function
+    best_solution_ea, best_distance_ea, fitness_score_ea = tsp_ea(cities, distances, num_generations, population_size, tournament_size, mu)
     
     print(fitness_scores)
-    print("Best solution:", best_solution)
+    print("Best solution:", [i[0] for i in best_solution])
     print("Best distance:", best_distance)
 
-    if not os.path.exists('results/ex4'):
-        os.makedirs('results/ex4')
+    
+    print("=====================================================================")
 
-    # plt.figure()
-    # plt.plot(range(num_generations), fitness_scores, color='red', label='Memetic algorithm')
-    # plt.xlabel('Generation')
-    # plt.ylabel('Fitness')
-    # # plt.xlim(0,num_generations+1)
-    # # plt.
-    # plt.grid()
-    # plt.legend()
-    # plt.savefig('results/ex4/fitness.png')
+    print(fitness_score_ea)
+    print("Best solution:", [i[0] for i in best_solution_ea])
+    print("Best distance:", best_distance_ea)
+
+    
+    
+    print("=====================================================================")
+
+    filename_tsp = "dantzig42.tsp"
+    print(f"Load data from {filename_tsp} and solve TSP problem.")
+    cities_tsp = load_tsp_file(filename_tsp)
+
+    population_size = 42
+
+    # Calculate distance matrix
+    distances = calculate_distance_matrix(cities_tsp)
+
+    # Call the memetic algorithm function
+    best_solution_tsp, best_distance_tsp, fitness_scores_tsp = two_opt(cities_tsp, distances, num_generations)
+
+    # Call evolutionary algorithm function
+    best_solution_ea_tsp, best_distance_ea_tsp, fitness_score_ea_tsp = tsp_ea(cities_tsp, distances, num_generations, population_size, tournament_size, mu)
+    
+    print(fitness_scores_tsp)
+    print(f"Best solution for {filename_tsp}:", [i[0] for i in best_solution_tsp])
+    print(f"Best distance for {filename_tsp}:", best_distance_tsp)
+
+    
+    print("=====================================================================")
+
+    print(fitness_score_ea_tsp)
+    print("Best solution:", [i[0] for i in best_solution_ea_tsp])
+    print("Best distance:", best_distance_ea_tsp)
+
+
+    
