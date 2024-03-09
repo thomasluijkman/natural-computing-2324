@@ -152,7 +152,10 @@ def string_search_ga(verbose=False):
             new_population += crossover(parents[0], parents[1])
         assert(len(new_population) == POP_SIZE)
         # Step 4b: Introduce variation via mutation
-        population = [mutate(individual) for individual in new_population]
+        if MU > 0:
+            population = [mutate(individual) for individual in new_population]
+        else:
+            population = new_population.copy()
         i += 1
     return -10, distances # negative return means max generations were reached without target string being found
 
