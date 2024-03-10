@@ -35,7 +35,7 @@ def ga_v1(bitstring):
         if fitness(new_bits) > fitness(old_bits):
             old_bits = new_bits.copy()
         fitness_gens.append(fitness(old_bits))
-    plt.plot(range(GENERATIONS), fitness_gens, color='green', label='Version 1')
+    plt.plot(range(GENERATIONS), fitness_gens, color='green')
 
 def ga_v2(bitstring):
     fitness_gens = []
@@ -51,7 +51,7 @@ def ga_v2(bitstring):
         # compare bits and pick one with best fitness
         old_bits = new_bits.copy()
         fitness_gens.append(fitness(old_bits))
-    plt.plot(range(GENERATIONS), fitness_gens, color='red', label='Version 2')
+    plt.plot(range(GENERATIONS), fitness_gens, color='red')
         
 
 def main():
@@ -60,9 +60,13 @@ def main():
 
     random.seed(SEED)
     plt.figure()
-    bitstring = generate_bitstring()
-    ga_v1(bitstring)
-    ga_v2(bitstring)
+    
+    for _ in range(10):
+        bitstring = generate_bitstring()
+        ga_v1(bitstring)
+        ga_v2(bitstring)
+
+    
     plt.xlabel('Generation')
     plt.ylabel('Fitness')
     plt.xlim(0,1500)

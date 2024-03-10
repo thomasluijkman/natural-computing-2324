@@ -60,6 +60,7 @@ def two_opt(tour, distances, max_generation):
         distance = total_distance(tour, distances)
         fitness_scores.append(1/distance)
         gen += 1
+        print(improved)
     print(f"finished two opt after {gen} gernations")
     return tour, distance, fitness_scores
 
@@ -219,7 +220,6 @@ if __name__ == "__main__":
     print(fitness_score_ea)
     print("Best solution:", [i[0] for i in best_solution_ea])
     print("Best distance:", best_distance_ea)
-
     
     
     print("=====================================================================")
