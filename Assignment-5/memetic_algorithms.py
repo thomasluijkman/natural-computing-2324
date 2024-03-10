@@ -3,6 +3,7 @@ import math
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 SEED = 42
 
@@ -37,16 +38,18 @@ def load_cities_from_file(filename):
 def total_distance(tour, distances):
     total = 0
     for i in range(1, len(tour)):
+        # try:
         total += distances[tour[i-1][0]][tour[i][0]]
+        # except:
+        #     print(tour)
+        #     print(i)
+
     return total
 
 # Function for 2-opt local search
-def two_opt(tour, distances, max_generation):
-    distance = total_distance(tour, distances)
-    fitness_scores = []
+def two_opt(tour, distances):
     improved = True
-    gen = 0
-    while improved and gen < 1500:
+    while improved:
         improved = False
         for i in range(1, len(tour) - 2):
             for j in range(i + 1, len(tour)):
@@ -57,11 +60,55 @@ def two_opt(tour, distances, max_generation):
                 if total_distance(new_tour, distances) < total_distance(tour, distances):
                     tour = new_tour
                     improved = True
-        distance = total_distance(tour, distances)
-        fitness_scores.append(1/distance)
-        gen += 1
-    print(f"finished two opt after {gen} gernations")
-    return tour, distance, fitness_scores
+    # print(f"finished two opt after {gen} gernations")
+    return tour
+
+# Function for 2-opt local search
+def two_opt_once(tour, distances):
+    distance = total_distance(tour, distances)
+    for i in range(1, len(tour) - 2):
+        for j in range(i + 1, len(tour)):
+            if j - i == 1:
+                continue  # No improvement, skip iteration
+            new_tour = tour[:]
+            new_tour[i:j] = tour[j-1:i-1:-1]  # Reverse segment
+            if total_distance(new_tour, distances) < total_distance(tour, distances):
+                tour = new_tour
+
+    # print(f"finished two opt after {gen} gernations")
+    return tour
+
+def tsp_ma(tour, distances, generations, population_size, tournament_size, mu):
+    fitness_scores = []
+    # Step 1: Population of candidate solutions
+    population = initialise_population(tour, population_size)
+    # Repeat steps 2-4
+    i = 0
+    while i < generations:
+        new_population = []
+        # Step 2: Determine fitness for every solution
+        pop_fitness = calc_population_fitness(population, distances)
+        pop_with_fitness = list(zip(population, pop_fitness))
+        for _ in range(int(population_size / 2)):
+            # Step 3: Select parents for new generation
+            parents = get_parents_with_fitness(pop_with_fitness, tournament_size)
+            # Step 4a: Introduce variation via crossover
+            new_population += crossover(parents[0], parents[1])
+        assert(len(new_population) == population_size)
+        if mu > 0:
+            population = [mutate(individual, mu) for individual in new_population]
+        else:
+            population = new_population.copy()
+        population = [two_opt_once(individual, distances) for individual in new_population]
+        max_fitness, index = find_fittest(population, distances)
+        fitness_scores.append(max_fitness)
+        i += 1
+    max_fitness, index = find_fittest(population, distances)
+    best_tour = population[index]
+    best_distance = total_distance(best_tour, distances)
+    print(f"finished memetic algorithm after {generations} generations")
+    return best_tour, best_distance, max_fitness, fitness_scores 
+
 
 # ================= Evolutionary algorithm =================
 def fitness(individual, distances):
@@ -138,6 +185,7 @@ def crossover(parent1, parent2):
     return child1, child2
 
 def tsp_ea(tour, distances, generations, population_size, tournament_size, mu):
+    fitness_scores = []
     # Step 1: Population of candidate solutions
     population = initialise_population(tour, population_size)
     # Repeat steps 2-4
@@ -157,12 +205,14 @@ def tsp_ea(tour, distances, generations, population_size, tournament_size, mu):
             population = [mutate(individual, mu) for individual in new_population]
         else:
             population = new_population.copy()
+        max_fitness, index = find_fittest(population, distances)
+        fitness_scores.append(max_fitness)
         i += 1
     max_fitness, index = find_fittest(population, distances)
     best_tour = population[index]
     best_distance = total_distance(best_tour, distances)
     print(f"finished evolutionary algorithm after {generations} generations")
-    return best_tour, best_distance, max_fitness 
+    return best_tour, best_distance, max_fitness, fitness_scores 
 
 # Code was adapted from: https://stackoverflow.com/questions/47719924/reading-in-tsp-file-python
 def load_tsp_file(filename):
@@ -184,6 +234,29 @@ def load_tsp_file(filename):
     assert(len(cities) != 0)
     return cities
 
+def plotting(data, name):
+    average_fitness = np.mean(data, axis=0)
+
+    # Plotting
+    plt.figure(figsize=(12, 6))  # Adjust figure size if needed
+
+    # Plot individual runs
+    for i, run_data in enumerate(data):
+        generation = range(1, len(run_data) + 1)  # Generating x-axis data (generations)
+        plt.plot(generation, run_data, label=f"Run {i+1}")
+
+    # Plot average fitness
+    generation = range(1, len(average_fitness) + 1)  # Generating x-axis data (generations)
+    plt.plot(generation, average_fitness, color='black', linestyle='--', label='Average')
+
+    plt.title(f'Fitness Over {len(data[0])} Generations ({name})')
+    plt.xlabel('Generation')
+    plt.ylabel('Fitness')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.grid(True)
+    plt.savefig("./results/ex5/ea42.png")
+
+
 # Example usage:
 if __name__ == "__main__":
     # Load cities from file
@@ -203,52 +276,68 @@ if __name__ == "__main__":
     tournament_size = 5
     mu = 0.01
 
-    # Call the memetic algorithm function
-    best_solution, best_distance, fitness_scores = two_opt(cities, distances, num_generations)
+    fitness_scores_runs_50ma = []
+    fitness_scores_runs_50ea = []
 
-    # Call evolutionary algorithm function
-    best_solution_ea, best_distance_ea, fitness_score_ea = tsp_ea(cities, distances, num_generations, population_size, tournament_size, mu)
-    
-    print(fitness_scores)
-    print("Best solution:", [i[0] for i in best_solution])
-    print("Best distance:", best_distance)
+    for i in range(10):
+        # Call the memetic algorithm function
+        best_solution, best_distance, max_fitness_score, all_fitness_scores = tsp_ma(cities, distances, 500, population_size, tournament_size, mu)
+        fitness_scores_runs_50ma.append(all_fitness_scores)
+        # Call evolutionary algorithm function
+        best_solution_ea, best_distance_ea, max_fitness_score_ea, all_fitness_scores_ea = tsp_ea(cities, distances, num_generations, population_size, tournament_size, mu)
+        fitness_scores_runs_50ea.append(all_fitness_scores_ea)
+        
+        print(max_fitness_score)
+        print("Best solution:", [i[0] for i in best_solution])
+        print("Best distance:", best_distance)
+
+        
+        print("=====================================================================")
+
+        print(max_fitness_score_ea)
+        print("Best solution:", [i[0] for i in best_solution_ea])
+        print("Best distance:", best_distance_ea)
 
     
     print("=====================================================================")
 
-    print(fitness_score_ea)
-    print("Best solution:", [i[0] for i in best_solution_ea])
-    print("Best distance:", best_distance_ea)
-
-    
-    
-    print("=====================================================================")
+    plotting(fitness_scores_runs_50ma, "memetic algorithms")
+    plotting(fitness_scores_runs_50ea, "Simple EA")
 
     filename_tsp = "dantzig42.tsp"
     print(f"Load data from {filename_tsp} and solve TSP problem.")
     cities_tsp = load_tsp_file(filename_tsp)
 
     population_size = 42
-
+    
     # Calculate distance matrix
     distances = calculate_distance_matrix(cities_tsp)
 
-    # Call the memetic algorithm function
-    best_solution_tsp, best_distance_tsp, fitness_scores_tsp = two_opt(cities_tsp, distances, num_generations)
+    fitness_scores_runs_42ma = []
+    fitness_scores_runs_42ea = []
+    for i in range(10):
+        # Call the memetic algorithm function
+        best_solution_tsp, best_distance_tsp, max_fitness_score, all_fitness_scores = tsp_ma(cities_tsp, distances, 500, population_size, tournament_size, mu)
+        fitness_scores_runs_42ma.append(all_fitness_scores)
+        # Call evolutionary algorithm function
+        best_solution_ea_tsp, best_distance_ea_tsp, max_fitness_score_ea, all_fitness_scores_ea = tsp_ea(cities_tsp, distances, num_generations, population_size, tournament_size, mu)
+        fitness_scores_runs_42ea.append(all_fitness_scores_ea)
+        
+        print(max_fitness_score)
+        print(f"Best solution for {filename_tsp}:", [i[0] for i in best_solution_tsp])
+        print(f"Best distance for {filename_tsp}:", best_distance_tsp)
 
-    # Call evolutionary algorithm function
-    best_solution_ea_tsp, best_distance_ea_tsp, fitness_score_ea_tsp = tsp_ea(cities_tsp, distances, num_generations, population_size, tournament_size, mu)
-    
-    print(fitness_scores_tsp)
-    print(f"Best solution for {filename_tsp}:", [i[0] for i in best_solution_tsp])
-    print(f"Best distance for {filename_tsp}:", best_distance_tsp)
+        
+        print("=====================================================================")
 
-    
-    print("=====================================================================")
+        print(max_fitness_score_ea)
+        print("Best solution:", [i[0] for i in best_solution_ea_tsp])
+        print("Best distance:", best_distance_ea_tsp)
 
-    print(fitness_score_ea_tsp)
-    print("Best solution:", [i[0] for i in best_solution_ea_tsp])
-    print("Best distance:", best_distance_ea_tsp)
+    plotting(fitness_scores_runs_42ma, "memetic algorithms")
+    plotting(fitness_scores_runs_42ea, "Simple EA")
+
+
 
 
     
