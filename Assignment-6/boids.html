@@ -24,8 +24,8 @@ let Scene = {
         for (let p of this.swarm) {
             totalVelocity.add(p.dir);
         }
-        let averageVelocity = totalVelocity.div(this.swarm.length).normalize();
-        return [ averageVelocity.x, averageVelocity.y ];
+        let averageVelocity = totalVelocity.div(this.swarm.length).mag();
+        return averageVelocity;
     },
     calculateNearestNeighborDistances() {
         let distances = [];
