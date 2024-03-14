@@ -13,19 +13,22 @@ let Scene = {
 	neighbours( x ){
 		let r = []
 		for( let p of this.swarm ){
-			if( dist( p.pos.x, p.pos.y, x.x, x.y ) <= 100 ){
+			if( dist( p.pos.x, p.pos.y, x.x, x.y ) <= 100 ){ 
 				r.push( p )
 			}
 		}
 		return r
 	},
     calculateOrderParameter() {
-        let totalVelocity = createVector(0, 0);
+        let totalMagnitude = 0;
+        let totalVector = createVector(0,0);
         for (let p of this.swarm) {
-            totalVelocity.add(p.dir);
+            let normalizedVector = p5.Vector.div(p.dir, p.dir.mag())
+            totalVector = p5.Vector.add(totalVector, normalizedVector)
         }
-        let averageVelocity = totalVelocity.div(this.swarm.length).mag();
-        return averageVelocity;
+        console.log(totalVector)
+        let averageMagnitude = totalVector.mag() / this.swarm.length;
+        return averageMagnitude;
     },
     calculateNearestNeighborDistances() {
         let distances = [];
@@ -84,12 +87,12 @@ class Particle {
 		}
 		avg_p.div( N.length ); avg_d.div( N.length )
 		let avg_angle = Math.atan2( avg_cos, avg_sin )
-		avg_angle += Math.random()*0.5 - 0.25
+		avg_angle += Math.random()*0.5 - 0.25 // Allignment 0.5
 		this.dir = p5.Vector.fromAngle( avg_angle )
 		let cohesion = p5.Vector.sub( avg_p, this.pos )
-		cohesion.div( 100 )
+		cohesion.div( 100 ) // Cohesion value 100
 		this.dir.add( cohesion )
-        avg_d.mult( 20 )
+        avg_d.mult( 20 ) // Separtion 20
 		this.dir.add( avg_d )
         this.dir.mult( 4 )
 		this.pos.add( this.dir )
