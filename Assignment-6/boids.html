@@ -26,7 +26,6 @@ let Scene = {
             let normalizedVector = p5.Vector.div(p.dir, p.dir.mag())
             totalVector = p5.Vector.add(totalVector, normalizedVector)
         }
-        console.log(totalVector)
         let averageMagnitude = totalVector.mag() / this.swarm.length;
         return averageMagnitude;
     },
@@ -90,9 +89,9 @@ class Particle {
 		avg_angle += Math.random()*0.5 - 0.25 // Allignment 0.5
 		this.dir = p5.Vector.fromAngle( avg_angle )
 		let cohesion = p5.Vector.sub( avg_p, this.pos )
-		cohesion.div( 100 ) // Cohesion value 100
+		cohesion.div( 200 ) // Cohesion value 100
 		this.dir.add( cohesion )
-        avg_d.mult( 20 ) // Separtion 20
+        avg_d.mult( 100 ) // Separtion 20
 		this.dir.add( avg_d )
         this.dir.mult( 4 )
 		this.pos.add( this.dir )
