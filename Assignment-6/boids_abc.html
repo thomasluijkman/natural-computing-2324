@@ -45,15 +45,25 @@ let Scene = {
         }
         return distances;
     },
+	resetScene(alignment, cohesion, separation) {
+		this.swarm = []
+		for( let _ of Array(200) ){
+				Scene.swarm.push( new Particle(alignment, cohesion, separation) )
+			}
+		stepCounter = 0
+	}
 }
 
 let stepCounter = 0;
-const maxSteps = 300;
+const maxSteps = 20;
 
 class Particle {
-	constructor(){
+	constructor(alignment, cohesion, separation){
 		this.pos = createVector( random(0,Scene.w), random(0,Scene.h) )
 		this.dir = p5.Vector.random2D()
+		this.alignment = alignment
+		this.cohesion = cohesion
+		this.separation = separation
 	}
 	wrap(){
 		if( this.pos.x < 0 ) this.pos.x += Scene.w
@@ -86,24 +96,27 @@ class Particle {
 		}
 		avg_p.div( N.length ); avg_d.div( N.length )
 		let avg_angle = Math.atan2( avg_cos, avg_sin )
-		avg_angle += Math.random()*0.5 - 0.25 // Allignment 0.5
+		avg_angle += Math.random() * this.alignment - (this.alignment / 2) // Allignment 0.5
 		this.dir = p5.Vector.fromAngle( avg_angle )
 		let cohesion = p5.Vector.sub( avg_p, this.pos )
-		cohesion.div( 200 ) // Cohesion value 100
+		cohesion.div( this.cohesion ) // Cohesion value 100
 		this.dir.add( cohesion )
-        avg_d.mult( 100 ) // Separtion 20
+        avg_d.mult( this.separation ) // Separtion 20
 		this.dir.add( avg_d )
         this.dir.mult( 4 )
 		this.pos.add( this.dir )
 		this.wrap()
-        
 	}
+}
+
+function simulation(){
+	
 }
 
 function setup(){
 	createCanvas( Scene.w, Scene.h )
 	for( let _ of Array(200) ){
-		Scene.swarm.push( new Particle() )
+		Scene.swarm.push( new Particle(0.5, 100, 20))
 	}
 }
 
@@ -119,16 +132,20 @@ function draw(){
         num++
 		p.draw()
 	}
-	console.log("positions: ", pos)
-    console.log("order_param: (", Scene.calculateOrderParameter().toString(), ")")
-    // console.log(Scene.swarm)
-    let nearestNeighborDistances = Scene.calculateNearestNeighborDistances();
-    console.log("Nearest Neighbor Distances: [", nearestNeighborDistances.toString(), "]");
-    console.log("avg_dist: ", nearestNeighborDistances.reduce((a, b) => a + b, 0) / nearestNeighborDistances.length)
+	// console.log("positions: ", pos)
+    // console.log("order_param: (", Scene.calculateOrderParameter().toString(), ")")
+    // // console.log(Scene.swarm)
+    // let nearestNeighborDistances = Scene.calculateNearestNeighborDistances();
+    // console.log("Nearest Neighbor Distances: [", nearestNeighborDistances.toString(), "]");
+    // console.log("avg_dist: ", nearestNeighborDistances.reduce((a, b) => a + b, 0) / nearestNeighborDistances.length)
     stepCounter++;
-        if (stepCounter >= maxSteps) {
-            noLoop(); // Stop the draw loop
-        }
+	if (stepCounter >= maxSteps) {
+		let alignment = 0.5
+		let cohesion = 100
+		let separation = 20
+		Scene.resetScene(alignment, cohesion, separation);
+	}
+	[]
 }
 </script>
 </body>
