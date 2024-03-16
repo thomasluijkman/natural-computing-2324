@@ -8,12 +8,22 @@
 </head>
 <body>
 <script>
+/* **************************************************
+			BOID SIMULATION FUNCTIONS
+************************************************** */
+let stepCounter = 0;
+const maxSteps = 300;
+const N = 15
+const W = 180
+const H = 180
+const INT_RADIUS = 20
+
 let Scene = {
-	w : 600, h : 600, swarm : [],
+	w : W, h : H, swarm : [],
 	neighbours( x ){
 		let r = []
 		for( let p of this.swarm ){
-			if( dist( p.pos.x, p.pos.y, x.x, x.y ) <= 100 ){ 
+			if( dist( p.pos.x, p.pos.y, x.x, x.y ) <= INT_RADIUS ){ 
 				r.push( p )
 			}
 		}
@@ -54,9 +64,6 @@ let Scene = {
 	}
 }
 
-let stepCounter = 0;
-const maxSteps = 20;
-
 class Particle {
 	constructor(alignment, cohesion, separation){
 		this.pos = createVector( random(0,Scene.w), random(0,Scene.h) )
@@ -70,7 +77,6 @@ class Particle {
 		if( this.pos.y < 0 ) this.pos.y += Scene.h
 		if( this.pos.x > Scene.w ) this.pos.x -= Scene.w
 		if( this.pos.y > Scene.h ) this.pos.y -= Scene.h
-
 	}
 	draw(){
 		fill( 0 )
@@ -96,56 +102,66 @@ class Particle {
 		}
 		avg_p.div( N.length ); avg_d.div( N.length )
 		let avg_angle = Math.atan2( avg_cos, avg_sin )
-		avg_angle += Math.random() * this.alignment - (this.alignment / 2) // Allignment 0.5
+		avg_angle += Math.random() * this.alignment - (this.alignment / 2)
 		this.dir = p5.Vector.fromAngle( avg_angle )
 		let cohesion = p5.Vector.sub( avg_p, this.pos )
-		cohesion.div( this.cohesion ) // Cohesion value 100
+		cohesion.div( this.cohesion )
 		this.dir.add( cohesion )
-        avg_d.mult( this.separation ) // Separtion 20
+        avg_d.mult( this.separation )
 		this.dir.add( avg_d )
-        this.dir.mult( 4 )
 		this.pos.add( this.dir )
 		this.wrap()
 	}
 }
 
-function simulation(){
-	
-}
-
-function setup(){
-	createCanvas( Scene.w, Scene.h )
-	for( let _ of Array(200) ){
-		Scene.swarm.push( new Particle(0.5, 100, 20))
-	}
-}
-
-function draw(){
-	background( 220 )
+function simulationStep(log = false){
 	let pos = ""
     let num = 0
 	for( let p of Scene.swarm ){
 		p.step()
-        // let x, y
         const [x, y] = p.getPos()
 		pos = pos.concat("(", x, ",", y ,")", ";")
         num++
-		p.draw()
 	}
-	// console.log("positions: ", pos)
-    // console.log("order_param: (", Scene.calculateOrderParameter().toString(), ")")
-    // // console.log(Scene.swarm)
-    // let nearestNeighborDistances = Scene.calculateNearestNeighborDistances();
-    // console.log("Nearest Neighbor Distances: [", nearestNeighborDistances.toString(), "]");
-    // console.log("avg_dist: ", nearestNeighborDistances.reduce((a, b) => a + b, 0) / nearestNeighborDistances.length)
+	if (log){
+		//console.log("positions: ", pos)
+		console.log("order_param: (", Scene.calculateOrderParameter().toString(), ")")
+		let nearestNeighborDistances = Scene.calculateNearestNeighborDistances();
+		//console.log("Nearest Neighbor Distances: [", nearestNeighborDistances.toString(), "]");
+		console.log("avg_dist: ", nearestNeighborDistances.reduce((a, b) => a + b, 0) / nearestNeighborDistances.length)
+	}
     stepCounter++;
 	if (stepCounter >= maxSteps) {
-		let alignment = 0.5
-		let cohesion = 100
-		let separation = 20
-		Scene.resetScene(alignment, cohesion, separation);
+		return;
 	}
-	[]
+}
+
+function simulation(params){
+	Scene.resetScene(params[0], params[1], params[2])
+	for(let _ of Array(maxSteps)){
+		simulationStep()
+	}
+	return Scene.calculateOrderParameter()
+}
+
+/* **************************************************
+		   APPROXIMATE BAYESIAN COMPUTING
+************************************************** */
+function ABC(){
+
+}
+
+/* **************************************************
+			  MANDATORY P5 FUNCTIONS
+************************************************** */
+function setup(){
+
+}
+
+function draw(){
+	simulation([0.5,100,20], true)
+	console.log(stepCounter)
+	noLoop()
 }
 </script>
 </body>
