@@ -215,7 +215,6 @@ function ABC(){
 	console.log('Starting ABC algorithm...')
 	population = generateInitialPopulation(POPULATION_SIZE, E_0)
 	console.log('Initial population:', printNestedArray(population))
-	let count = 0
 	for (let epsilon in EPSILONS){
 		console.log('Applying epsilon = ', epsilon)
 		new_population = []
@@ -229,7 +228,6 @@ function ABC(){
 		}
 		population = [...new_population]
 		console.log('Population after epsilon = ', epsilon, ':', printNestedArray(population))
-		count++
 	}
 }
 
