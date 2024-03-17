@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Boids Simulation</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script src="../p5/p5.js"></script>
 </head>
 <body>
 <script>
@@ -147,21 +147,92 @@ function simulation(params){
 /* **************************************************
 		   APPROXIMATE BAYESIAN COMPUTING
 ************************************************** */
-function ABC(){
+const POPULATION_SIZE = 20
+const MAX_ALIGNMENT = 1
+const MAX_COHESION = 400
+const MAX_SEPARATION = 200
+const E_0 = 0.2
+const EPSILONS = [0.4, 0.6, 0.7, 0.8, 0.9, 0.95]
 
+function randRange(min, max){
+	let rand = Math.floor(Math.random() * (max - min + 1) + min)
+	return rand
+}
+
+function printNestedArray(arr){
+	let str = "["
+	for (let item1 in arr){
+		str += "["
+		for (let item2 in item1){
+			str += item2.toString()
+			str += ","
+		}
+		str += "],"
+	}
+	return str
+}
+
+function generateInitialPopulation(populationSize, e_0){
+	console.log('Generating initial population.')
+	population = []
+	while (population.length < populationSize){
+		alignment  = Math.random() * MAX_ALIGNMENT
+		cohesion   = randRange(0, MAX_COHESION)
+		separation = randRange(0, MAX_SEPARATION)
+		fitness = simulation([alignment,cohesion,separation])
+		if (fitness > e_0){
+			population.push([[alignment,cohesion,separation]])
+			console.log('Generated ', population.length, ' out of ', populationSize, ' candidates.')
+		}
+	}
+	return population
+}
+
+function mutate(params){
+	var new_params = [...params]
+	var mutating = randRange(0,2)
+	var max_diff = params[mutating] * 0.2
+	var new_param = Math.random() * max_diff
+	if (Math.random < 0.5){
+		new_params[mutating] -= new_param
+	}
+	else{
+		new_params[mutating] += new_param
+	}
+	return new_params
+}
+
+function ABC(){
+	console.log('Starting ABC algorithm...')
+	population = generateInitialPopulation(POPULATION_SIZE, E_0)
+	console.log('Initial population:', population.toString())
+	for (let epsilon in EPSILONS){
+		console.log('Applying epsilon = ', epsilon)
+		new_population = []
+		while (new_population < POPULATION_SIZE){
+			individual = randRange(0, population.length-1)
+			new_individual = mutate(individual)
+			fitness = simulation(new_individual)
+			if (fitness > epsilon){
+				new_population.push([new_individual])
+			}
+		}
+		population = [...new_population]
+		console.log('Population after epsilon = ', epsilon, ':',population)
+	}
 }
 
 /* **************************************************
 			  MANDATORY P5 FUNCTIONS
 ************************************************** */
 function setup(){
-
+	var attempt = [[1,2,3],[2,3,4]]
+	attempt.push([7,8,9])
+	console.log(attempt[2][2])
 }
 
 function draw(){
-	simulation([0.5,100,20], true)
-	console.log(stepCounter)
-	noLoop()
+	ABC()
 }
 </script>
 </body>
