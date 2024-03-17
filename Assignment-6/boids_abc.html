@@ -218,16 +218,22 @@ function ABC(){
 	for (let epsilon in EPSILONS){
 		console.log('Applying epsilon = ', epsilon)
 		new_population = []
+		fitness_values = []
+		while_count = 0
 		while (new_population.length < POPULATION_SIZE){
 			individual = randRange(0, population.length-1)
 			new_individual = mutate(population[individual])
 			fitness = simulation(new_individual)
 			if (fitness > epsilon){
+				fitness_values.push(fitness)
 				new_population.push(new_individual)
 			}
+			while_count++
 		}
 		population = [...new_population]
 		console.log('Population after epsilon = ', epsilon, ':', printNestedArray(population))
+		console.log('Fitness values after epsilon = ', epsilon, ':', fitness_values.toString())
+		console.log('Loops taken for epsilon = ', epsilon, ':', while_count)
 	}
 }
 
