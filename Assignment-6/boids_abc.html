@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Boids Simulation</title>
-  <script src="../p5/p5.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
 <script>
@@ -160,16 +160,23 @@ function randRange(min, max){
 }
 
 function printNestedArray(arr){
-	let str = "["
-	for (let item1 in arr){
-		str += "["
-		for (let item2 in item1){
-			str += item2.toString()
-			str += ","
-		}
-		str += "],"
-	}
-	return str
+    let str = "[";
+    for (let subArr of arr){
+        str += "[";
+        for (let item of subArr){
+            str += item.toString() + ",";
+        }
+        // Remove the trailing comma if there are elements in the subarray
+        if (subArr.length > 0) {
+            str = str.slice(0, -1); // Remove the last comma
+        }
+        str += "],";
+    }
+    // Remove the trailing comma if there are subarrays
+    if (arr.length > 0) {
+        str = str.slice(0, -1); // Remove the last comma
+    }
+    return str + "]";
 }
 
 function generateInitialPopulation(populationSize, e_0){
@@ -181,7 +188,9 @@ function generateInitialPopulation(populationSize, e_0){
 		separation = randRange(0, MAX_SEPARATION)
 		fitness = simulation([alignment,cohesion,separation])
 		if (fitness > e_0){
-			population.push([[alignment,cohesion,separation]])
+			let candidate = [alignment, cohesion, separation]; // Create a nested array
+        	population.push(candidate);
+			// population.push([alignment,cohesion,separation])
 			console.log('Generated ', population.length, ' out of ', populationSize, ' candidates.')
 		}
 	}
@@ -205,20 +214,22 @@ function mutate(params){
 function ABC(){
 	console.log('Starting ABC algorithm...')
 	population = generateInitialPopulation(POPULATION_SIZE, E_0)
-	console.log('Initial population:', population.toString())
+	console.log('Initial population:', printNestedArray(population))
+	let count = 0
 	for (let epsilon in EPSILONS){
 		console.log('Applying epsilon = ', epsilon)
 		new_population = []
-		while (new_population < POPULATION_SIZE){
+		while (new_population.length < POPULATION_SIZE){
 			individual = randRange(0, population.length-1)
-			new_individual = mutate(individual)
+			new_individual = mutate(population[individual])
 			fitness = simulation(new_individual)
 			if (fitness > epsilon){
-				new_population.push([new_individual])
+				new_population.push(new_individual)
 			}
 		}
 		population = [...new_population]
-		console.log('Population after epsilon = ', epsilon, ':',population)
+		console.log('Population after epsilon = ', epsilon, ':', printNestedArray(population))
+		count++
 	}
 }
 
@@ -226,13 +237,11 @@ function ABC(){
 			  MANDATORY P5 FUNCTIONS
 ************************************************** */
 function setup(){
-	var attempt = [[1,2,3],[2,3,4]]
-	attempt.push([7,8,9])
-	console.log(attempt[2][2])
 }
 
 function draw(){
 	ABC()
+	noLoop()
 }
 </script>
 </body>
