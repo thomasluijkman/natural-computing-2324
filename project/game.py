@@ -61,6 +61,9 @@ class Hand:
                 no_aces += 1
         return no_aces
     
+    def pair(self):
+        return len(self.hand) == 2 and self.hand[0].rank == self.hand[1].rank
+    
     def scoreHand(self):
         """Returns the highest score of the current hand as long as it is under 21 (if possible)"""
         score = 0
@@ -129,6 +132,16 @@ class Blackjack:
         self.dealer_hand = Hand()
         self.dealer_reshuffle = False
 
+    def resetRound(self):
+        self.player_hand = Hand()
+        self.dealer_hand = Hand()
+        self.player_bet = 0
+        if self.dealer_reshuffle:
+            deck = []
+            for _ in self.no_decks:
+                deck += self.newDeck()
+            self.shoe = deck
+            random.shuffle(self.shoe)
 
     def newDeck(self):
         """Generates a new deck containing all 52 basic cards (so no jokers)"""
@@ -190,20 +203,23 @@ class Blackjack:
         while self.player_money > MIN_BET:
             # Round start
             print(f'--------------\nROUND {rounds}\n--------------')
-            print(f'Drawing a card: {self.drawCard()}')
-            self.player_hand = Hand([self.drawCard(), self.drawCard()])
-            self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
-            print(f'Dealer\'s up card: {self.dealer_hand.hand[0]}')
-            print(f'Players\'s hand: {str(self.player_hand)}')
 
             # Bet placement
             self.player_bet = 0
-            while self.player_bet < MIN_BET or self.player_bet > MAX_BET:
+            while self.player_bet < MIN_BET or self.player_bet > MAX_BET or self.player_bet > self.player_money:
                 self.player_bet = int(input(f'Place your bets! (You have €{self.player_money})\n> '))
                 if self.player_bet < MIN_BET:
                     print(f'Bet too low! Minimum bet size is {MIN_BET}')
                 elif self.player_bet > MAX_BET:
                     print(f'Bet too high! Maximum bet size is {MAX_BET}')
+                elif self.player_bet > self.player_money:
+                    print(f'You do not have enough money! Please try again.')
+            
+            # Deal cards
+            self.player_hand = Hand([self.drawCard(), self.drawCard()])
+            self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
+            print(f'Dealer\'s up card: {self.dealer_hand.hand[0]}')
+            print(f'Players\'s hand: {str(self.player_hand)}')
             
             # Player plays their round 
             playing = True
@@ -211,7 +227,7 @@ class Blackjack:
                 drawn = self.drawCard()
                 self.player_hand.addCard(drawn)
                 print(f'You drew a {drawn}!')
-                print(f'Player\'s hand: {self.player_hand}')
+                print(f'Player\'s hand: {self.player_hand} (score: {self.player_hand.scoreHand()})')
                 if self.player_hand.isBust():
                     nonlocal playing 
                     playing = False
@@ -230,11 +246,11 @@ class Blackjack:
                 match input(f'Do you want to hit (h) or stand (s)?\n> '):
                     case 'h'|'H': player_hits()
                     case 's'|'S': player_stands()
-                    case _:       print('Please input either \'h\' or \'s\'.')
+                    case _      : print('Please input either \'h\' or \'s\'.')
             
             # Dealer plays their round
             playing = True
-            print(f'Dealer\'s hand: {self.dealer_hand}')
+            print(f'Dealer\'s hand: {self.dealer_hand} (score: {self.dealer_hand.scoreHand()})')
             if self.dealer_hand.isBlackjack():
                 print('Dealer has Blackjack!')
             while playing:
@@ -242,7 +258,7 @@ class Blackjack:
                 if dealer_score <= 16:
                     drawn = self.drawCard()
                     self.dealer_hand.addCard(drawn)
-                    print(f'Dealer drew a {drawn}!\nDealer\'s hand: {self.dealer_hand}')
+                    print(f'Dealer drew a {drawn}!\nDealer\'s hand: {self.dealer_hand} (score: {self.dealer_hand.scoreHand()})')
                 elif dealer_score > 16 and not self.dealer_hand.isBust():
                     print(f'Dealer stands on {dealer_score}!')
                     playing = False
@@ -252,7 +268,10 @@ class Blackjack:
             
             # Payout
             self.payout(verbose=True)
+            self.resetRound()
+            rounds += 1
             print('')
+        print('You ran out of money! Game over...')
 
     def __str__(self):
         string = "Game state:\n" + str([str(card) for card in self.deck])
