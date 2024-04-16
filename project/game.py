@@ -276,6 +276,7 @@ class Blackjack:
     def __str__(self):
         string = "Game state:\n" + str([str(card) for card in self.deck])
         return string
-
-state = Blackjack()
-state.playGameInteractive()
+    
+if __name__ == "__main__":
+    state = Blackjack()
+    state.playGameInteractive()
