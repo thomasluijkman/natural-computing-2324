@@ -47,7 +47,7 @@ class Card:
     
 class Hand:
     def __init__(self, hand=[]):
-        self.hand = hand
+        self.hand = hand.copy()
     
     def addCard(self, card):
         """Adds a card to the hand"""

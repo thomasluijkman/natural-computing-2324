@@ -1,6 +1,6 @@
 import numpy as np
 from enum import Enum
-import game
+from game import Hand, Card
 # Store number of rounds taken, money, true count
 # TODO table with splittable cards, table with ace in hand, rest
 # Evolutionairy algorithm\
@@ -111,17 +111,17 @@ class Decision_tables():
         
 
 if __name__ == "__main__":
-    agent = Agent()
+    # agent = Agent()
     # tables = Decision_tables()
     # tables.print_table_pair()
-    agent_hand = game.Hand()
-    agent_hand.addCard(game.Card(0, 2))
-    dealer_hand = game.Hand()
-    agent_hand.addCard(game.Card(0, 10))
-    print("Agent's hand score:", agent_hand.scoreHand())
-    print("Dealer's hand score:", dealer_hand.scoreHand())
-    dealer_hand.addCard(game.Card(0, 2))
-    dealer_hand.addCard(game.Card(0, 10))
+    agent_hand = Hand()
+    agent_hand.addCard(Card(0, 5))
+    dealer_hand = Hand()
+    agent_hand.addCard(Card(0, 4))
+    print("Agent's hand score:", str(agent_hand))
+    print("Dealer's hand score:", str(dealer_hand))
+    dealer_hand.addCard(Card(0, 2))
+    dealer_hand.addCard(Card(0, 3))
     print("Agent's hand score after dealer's turn:", agent_hand.scoreHand())
     print("Dealer's hand score after dealer's turn:", dealer_hand.scoreHand())
     
