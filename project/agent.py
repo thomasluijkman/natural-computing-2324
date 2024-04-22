@@ -6,29 +6,47 @@ from game import Hand, Card
 # Evolutionairy algorithm\
 
 
+#For each use in functions calls and make it more usable
+HT = 0
+ST = 1 #Stand
+SP = 2 #Split
+DH = 3 #Double if possible otherwise hit
+DS = 4 #Double if possible otherwise stand
+# insurance = 5
+
+OTHER_TABLE = 0
+ACE_TABLE = 1
+PAIR_TABLE = 2
+
+
 class Agent:
     def __init__(self):
         self.money = 500
         self.decision_table = Decision_tables()
         self.epochs = 10000
 
+    def mutate_tables(self):
+        pass
+        # TODO not quite sure how we want to do this yet.
+        
+    def get_agent_fitness(self):
+        return self.money
+    
+    def get_agent_strat(self):
+        return self.decision_table
 
 class Actions(Enum):
     HT = 0
     ST = 1 #Stand
     SP = 2 #Split
     DH = 3 #Double if possible otherwise hit
-    DS = 4 #Dboule if possible otherwise stand
+    DS = 4 #Double if possible otherwise stand
     # insurance = 5
 
 class Decision_tables():
+
     def __init__(self):
         self.lookup_table_other = np.zeros((16,10))
-        count = 0
-        for i in range(16):
-            for j in range(10):
-                self.lookup_table_other[i][j] = count
-                count =+ 1
         self.lookup_table_ace = np.zeros((8,10))
         self.lookup_table_pair = np.zeros((10,10))
 
@@ -53,6 +71,29 @@ class Decision_tables():
             #compute index
             x = agent_hand.scoreHand() - 5
             return self.lookup_table_other[x][y]
+        
+    def update_table_cell(self, table, pos, action):
+        try:
+            x, y = pos
+            
+            def check_position_range(table_name, table, x, y):
+                if x < 0 or x >= len(table) or y < 0 or y >= len(table[0]):
+                    raise ValueError(f"Cannot update table: position ({x},{y}) out of range for '{table_name}' table")
+
+            match table:
+                case 0: # Other Table
+                    check_position_range("other", self.lookup_table_other, x, y)
+                    self.lookup_table_other[x][y] = action
+                case 1: # Ace Table
+                    check_position_range("ace", self.lookup_table_ace, x, y)
+                    self.lookup_table_ace[x][y] = action
+                case 2: # Pair Table
+                    check_position_range("pair", self.lookup_table_pair, x, y)
+                    self.lookup_table_pair[x][y] = action
+                case _:
+                    raise ValueError("Invalid table index while trying to update table")
+        except ValueError as e:
+                print(e)  # Print the error message
     
     def print_table_other(self):
         table = self.lookup_table_other
@@ -111,18 +152,13 @@ class Decision_tables():
         
 
 if __name__ == "__main__":
-    # agent = Agent()
-    # tables = Decision_tables()
-    # tables.print_table_pair()
-    agent_hand = Hand()
-    agent_hand.addCard(Card(0, 5))
-    dealer_hand = Hand()
-    agent_hand.addCard(Card(0, 4))
-    print("Agent's hand score:", str(agent_hand))
-    print("Dealer's hand score:", str(dealer_hand))
-    dealer_hand.addCard(Card(0, 2))
-    dealer_hand.addCard(Card(0, 3))
-    print("Agent's hand score after dealer's turn:", agent_hand.scoreHand())
-    print("Dealer's hand score after dealer's turn:", dealer_hand.scoreHand())
+    agent = Agent()
+    agent2 = Agent()
+    tables = agent.decision_table
+    tables.print_table_other()
+    tables.update_table_cell(OTHER_TABLE, (4,4), ST)
+    tables.print_table_other()
+    agent2.decision_table.print_table_other()
+
     
 
