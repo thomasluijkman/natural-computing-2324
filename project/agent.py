@@ -1,23 +1,13 @@
 import numpy as np
 from enum import Enum
 from game import Hand, Card
+import random
 # Store number of rounds taken, money, true count
 # TODO table with splittable cards, table with ace in hand, rest
 # Evolutionairy algorithm\
 
-
-#For each use in functions calls and make it more usable
-HT = 0
-ST = 1 #Stand
-SP = 2 #Split
-DH = 3 #Double if possible otherwise hit
-DS = 4 #Double if possible otherwise stand
-# insurance = 5
-
-OTHER_TABLE = 0
-ACE_TABLE = 1
-PAIR_TABLE = 2
-
+TABLE_SIZE = (16*10)+(8*10)+(10*10)
+MU = 1.0 / TABLE_SIZE
 
 class Agent:
     def __init__(self):
@@ -26,8 +16,16 @@ class Agent:
         self.epochs = 10000
 
     def mutate_tables(self):
-        pass
-        # TODO not quite sure how we want to do this yet.
+        tables = [self.decision_table.lookup_table_other, self.decision_table.lookup_table_ace, self.decision_table.lookup_table_pair]
+        for table_num, table in enumerate(tables):
+            for x_pos, x in enumerate(table):
+                for y_pos, y in enumerate(x):
+                    if random.random() <= MU*10:
+                        if table_num == 2: # If pairs table
+                            new_action = random.choice(list(Actions))
+                        else:
+                            new_action = random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS])
+                        self.decision_table.update_table_cell(table_num, (x_pos,y_pos), new_action)
         
     def get_agent_fitness(self):
         return self.money
@@ -36,7 +34,7 @@ class Agent:
         return self.decision_table
 
 class Actions(Enum):
-    HT = 0
+    HT = 0 #Hit
     ST = 1 #Stand
     SP = 2 #Split
     DH = 3 #Double if possible otherwise hit
@@ -79,27 +77,27 @@ class Decision_tables():
             def check_position_range(table_name, table, x, y):
                 if x < 0 or x >= len(table) or y < 0 or y >= len(table[0]):
                     raise ValueError(f"Cannot update table: position ({x},{y}) out of range for '{table_name}' table")
-
+                
             match table:
                 case 0: # Other Table
                     check_position_range("other", self.lookup_table_other, x, y)
-                    self.lookup_table_other[x][y] = action
+                    self.lookup_table_other[x][y] = action.value
                 case 1: # Ace Table
                     check_position_range("ace", self.lookup_table_ace, x, y)
-                    self.lookup_table_ace[x][y] = action
+                    self.lookup_table_ace[x][y] = action.value
                 case 2: # Pair Table
                     check_position_range("pair", self.lookup_table_pair, x, y)
-                    self.lookup_table_pair[x][y] = action
+                    self.lookup_table_pair[x][y] = action.value
                 case _:
                     raise ValueError("Invalid table index while trying to update table")
         except ValueError as e:
-                print(e)  # Print the error message
+                print(e) 
     
     def print_table_other(self):
         table = self.lookup_table_other
         if (len(table) == 0) or (len(table[0]) == 0):
             print("Table is empty!")
-        table_string = "   | A  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10  \n"
+        table_string = "   | A  | 2  | 3  | 4  | 5  | 6  | 7   8  | 9  | 10  \n"
         table_string += ("-" * (len(table[0]) * 5 + 5)) + "\n"
         for j, row in enumerate(table):
             for i, col in enumerate(row):
@@ -147,18 +145,25 @@ class Decision_tables():
                     table_string += f" {Actions(col).name}  " + "\n"
             table_string += ("-" * (len(row) * 5 + 8)) + "\n"
         print(table_string)
+
+    def print_tables(self):
+        print("Other Table:")
+        self.print_table_other()
+        print("Ace Table:")
+        self.print_table_ace()
+        print("Pair Table:")
+        self.print_table_pair()
+
+    
             
     
         
 
 if __name__ == "__main__":
     agent = Agent()
-    agent2 = Agent()
     tables = agent.decision_table
-    tables.print_table_other()
-    tables.update_table_cell(OTHER_TABLE, (4,4), ST)
-    tables.print_table_other()
-    agent2.decision_table.print_table_other()
-
-    
+    tables.print_tables()
+    agent.mutate_tables()
+    agent.mutate_tables()
+    tables.print_tables()
 
