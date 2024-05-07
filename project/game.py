@@ -1,4 +1,5 @@
 import random
+from enum import Enum
 
 ################################
 # SINGLE CARD CLASS DEFINITION #
@@ -7,6 +8,21 @@ ACE = 1
 JACK = 11
 QUEEN = 12
 KING = 13
+
+class GameState(Enum):
+    Dealer_won_doubledown = -2
+    Dealer_won = -1
+    Agent_draw = 0
+    Agent_won = 1
+    Agent_won_doubledown = 2
+
+class Actions(Enum):
+    HT = 0 #Hit
+    ST = 1 #Stand
+    SP = 2 #Split
+    DH = 3 #Double if possible otherwise hit
+    DS = 4 #Double if possible otherwise stand
+    # insurance = 5
 
 class Card:
     """A card is defined by two numbers: 
@@ -44,10 +60,11 @@ class Card:
             case 13: rank = "K"
             case _:  rank = str(self.rank)
         return suit+rank
-    
+
 class Hand:
     def __init__(self, hand=[]):
         self.hand = hand.copy()
+        self.doubled = False
     
     def addCard(self, card):
         """Adds a card to the hand"""
@@ -124,13 +141,91 @@ class Blackjack:
         self.played = []
 
         # Initialise variables for the player
-        self.player_hand = Hand()
+        self.player_hands = []
         self.player_money = 200
         self.player_bet = 0
 
         # Initialise variables for the dealer
         self.dealer_hand = Hand()
         self.dealer_reshuffle = False
+
+    def startGame(self):
+        self.player_hands.append(Hand([self.drawCard(), self.drawCard()]))
+        self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
+        if self.dealer_hand.isBlackjack():
+            self.player_hand = [GameState.Dealer_won]
+        return ([self.player_hand], self.player_hand)
+    
+    def getAllAgentHands(self):
+        return self.player_hands
+    
+    def agentAction(self, hand_index, action):
+        match action:
+            case Actions.HT:
+                self.agentHits(hand_index)
+            case Actions.ST:
+                self.agentStands(hand_index)
+            case Actions.SP:
+                old_hand = self.player_hands[hand_index]
+                if old_hand.pair():
+                    new_hand_1 = Hand([old_hand[0], self.drawCard()])
+                    new_hand_2 = Hand([old_hand[1], self.drawCard()])
+                    self.player_hands[hand_index] = new_hand_1
+                    self.player_hands.append(new_hand_2)
+                else:
+                    raise SplitError
+            case Actions.DH:
+                if len(self.player_hands[hand_index].hand) == 2:
+                    self.agentDoublesDown(hand_index)
+                else:
+                    self.agentHits(hand_index)
+            case Actions.DS:
+                if len(self.player_hands[hand_index].hand) == 2:
+                    self.agentDoublesDown(hand_index)
+                else:
+                    self.agentStands(hand_index)
+    
+    def agentDoublesDown(self, hand_index):
+        drawn = self.drawCard()
+        self.player_hands[hand_index].addCard(drawn)
+        self.player_hands[hand_index].doubled = True
+        self.dealerDrawsUntil17()
+        self.defineIfAgentWon(hand_index)
+    
+    def agentHits(self, hand_index):
+        drawn = self.drawCard()
+        self.player_hands[hand_index].addCard(drawn)
+        if self.player_hands[hand_index].isBust():
+            self.player_hands[hand_index] = GameState.Dealer_won
+    
+    def agentStands(self, hand_index):
+        self.dealerDrawsUntil17()
+        self.defineIfAgentWon(hand_index)
+        
+
+    def defineIfAgentWon(self, hand_index):
+        player_score = self.player_hands[hand_index].scoreHand()
+        dealer_score = self.player_hands[hand_index].scoreHand()
+        if player_score < dealer_score:
+            self.player_hands[hand_index] = GameState.Dealer_won_doubledown if self.player_hands[hand_index].doubled else GameState.Dealer_won
+        elif player_score == dealer_score:
+            self.player_hands[hand_index] = GameState.Agent_draw
+        elif player_score > dealer_score:
+            self.player_hands[hand_index] = GameState.Agent_won_doubledown if self.player_hands[hand_index].doubled else GameState.Agent_won
+        else:
+            raise Exception("Whoopsies!")
+    
+    def dealerDrawsUntil17(self):
+        dealing = True
+        while dealing:
+            dealer_score = self.dealer_hand.scoreHand()
+            if dealer_score <= 16:
+                drawn = self.drawCard()
+                self.dealer_hand.addCard(drawn)
+            elif dealer_score > 16 and not self.dealer_hand.isBust():
+                dealing = False
+            else: # Dealer is bust
+                dealing = False
 
     def resetRound(self):
         self.player_hand = Hand()
@@ -276,6 +371,10 @@ class Blackjack:
     def __str__(self):
         string = "Game state:\n" + str([str(card) for card in self.deck])
         return string
+    
+class SplitError(Exception):
+    def __init__(self, message="Player attempted to split non-splittable hand."):
+        super().__init__(message)
     
 if __name__ == "__main__":
     state = Blackjack()

@@ -1,6 +1,6 @@
 import numpy as np
 from enum import Enum
-from game import Hand, Card
+from game import Hand, Card, BlackJack, GameState, Actions
 import random
 # Store number of rounds taken, money, true count
 # TODO table with splittable cards, table with ace in hand, rest
@@ -12,10 +12,11 @@ MU = 1.0 / TABLE_SIZE
 class Agent:
     def __init__(self):
         self.money = 500
+        self.score = 0
         self.decision_table = Decision_tables()
         self.epochs = 10000
 
-    def mutate_tables(self):
+    def mutateTables(self):
         tables = [self.decision_table.lookup_table_other, self.decision_table.lookup_table_ace, self.decision_table.lookup_table_pair]
         for table_num, table in enumerate(tables):
             for x_pos, x in enumerate(table):
@@ -25,21 +26,27 @@ class Agent:
                             new_action = random.choice(list(Actions))
                         else:
                             new_action = random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS])
-                        self.decision_table.update_table_cell(table_num, (x_pos,y_pos), new_action)
+                        self.decision_table.updateTableCell(table_num, (x_pos,y_pos), new_action)
         
-    def get_agent_fitness(self):
+    def getAgentFitness(self):
         return self.money
     
-    def get_agent_strat(self):
+    def getAgentStrategy(self):
         return self.decision_table
 
-class Actions(Enum):
-    HT = 0 #Hit
-    ST = 1 #Stand
-    SP = 2 #Split
-    DH = 3 #Double if possible otherwise hit
-    DS = 4 #Double if possible otherwise stand
-    # insurance = 5
+    def playGame(self):
+        game = BlackJack() # create an instance
+        (player_hands, dealer_hand) = game.startGame() # initialise the game: deal initial cards to dealer and agent, player_hands == list of hands
+        while player_hands != [] or any(isinstance(ph, [Hand]) for ph in player_hands): 
+            for hand_index, player_hand in enumerate(player_hands): # for each player hand -> select action and play the round
+                if isinstance(player_hand, int):
+                    continue
+                action = self.decision_table.lookupAction(player_hand, dealer_hand)
+                game.agentAction(hand_index, action) # Send selected action to the game, the game should act on the action and change the hand
+                # Additionally, game should check if the state is winning/loosing and change the hands list value to GameState value 
+            player_hands = game.getAllAgentHands() # Returns int score if game is finished otherwise hand i.e. [Hand1, 1, hand3]
+        self.score += player_hands.sum() # Update the score
+            
 
 class Decision_tables():
 
@@ -70,7 +77,7 @@ class Decision_tables():
             x = agent_hand.scoreHand() - 5
             return self.lookup_table_other[x][y]
         
-    def update_table_cell(self, table, pos, action):
+    def updateTableCell(self, table, pos, action):
         try:
             x, y = pos
             
@@ -93,7 +100,7 @@ class Decision_tables():
         except ValueError as e:
                 print(e) 
     
-    def print_table_other(self):
+    def updateTableOther(self):
         table = self.lookup_table_other
         if (len(table) == 0) or (len(table[0]) == 0):
             print("Table is empty!")
@@ -110,7 +117,7 @@ class Decision_tables():
             table_string += ("-" * (len(row) * 5 + 5)) + "\n"
         print(table_string)
     
-    def print_table_ace(self):
+    def printTableAce(self):
         table = self.lookup_table_ace
         if (len(table) == 0) or (len(table[0]) == 0):
             print("Table is empty!")
@@ -128,7 +135,7 @@ class Decision_tables():
             table_string += ("-" * (len(row) * 5 + 6)) + "\n"
         print(table_string)
     
-    def print_table_pair(self):
+    def printTablePair(self):
         table = self.lookup_table_pair
         if (len(table) == 0) or (len(table[0]) == 0):
             print("Table is empty!")
@@ -148,22 +155,16 @@ class Decision_tables():
 
     def print_tables(self):
         print("Other Table:")
-        self.print_table_other()
+        self.updateTableOther()
         print("Ace Table:")
-        self.print_table_ace()
+        self.printTableAce()
         print("Pair Table:")
-        self.print_table_pair()
-
-    
-            
-    
-        
+        self.printTablePair()    
 
 if __name__ == "__main__":
     agent = Agent()
     tables = agent.decision_table
     tables.print_tables()
-    agent.mutate_tables()
-    agent.mutate_tables()
+    agent.mutateTables()
+    agent.mutateTables()
     tables.print_tables()
-
