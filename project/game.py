@@ -16,6 +16,12 @@ class GameState(Enum):
     Agent_won = 1
     Agent_won_doubledown = 2
 
+def sum_gamestates(gamestates):
+    total_sum = 0
+    for state in gamestates:
+        total_sum += state.value
+    return total_sum
+
 class Actions(Enum):
     HT = 0 #Hit
     ST = 1 #Stand
@@ -153,8 +159,8 @@ class Blackjack:
         self.player_hands.append(Hand([self.drawCard(), self.drawCard()]))
         self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
         if self.dealer_hand.isBlackjack():
-            self.player_hand = [GameState.Dealer_won]
-        return ([self.player_hand], self.player_hand)
+            self.player_hands = [GameState.Dealer_won]
+        return (self.player_hands, self.dealer_hand)
     
     def getAllAgentHands(self):
         return self.player_hands
@@ -197,6 +203,12 @@ class Blackjack:
         self.player_hands[hand_index].addCard(drawn)
         if self.player_hands[hand_index].isBust():
             self.player_hands[hand_index] = GameState.Dealer_won
+        elif self.player_hands[hand_index].scoreHand() == 21:
+            if self.player_hands[hand_index].doubled:
+                self.player_hands[hand_index] = GameState.Agent_won_doubledown
+            else:
+                self.player_hands[hand_index] = GameState.Agent_won
+
     
     def agentStands(self, hand_index):
         self.dealerDrawsUntil17()

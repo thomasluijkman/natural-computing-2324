@@ -1,6 +1,6 @@
 import numpy as np
 from enum import Enum
-from game import Hand, Card, BlackJack, GameState, Actions
+from game import Hand, Card, Blackjack, GameState, Actions, sum_gamestates
 import random
 # Store number of rounds taken, money, true count
 # TODO table with splittable cards, table with ace in hand, rest
@@ -29,33 +29,33 @@ class Agent:
                         self.decision_table.updateTableCell(table_num, (x_pos,y_pos), new_action)
         
     def getAgentFitness(self):
-        return self.money
+        return self.score
     
     def getAgentStrategy(self):
         return self.decision_table
 
     def playGame(self):
-        game = BlackJack() # create an instance
+        game = Blackjack() # create an instance
         (player_hands, dealer_hand) = game.startGame() # initialise the game: deal initial cards to dealer and agent, player_hands == list of hands
-        while player_hands != [] or any(isinstance(ph, [Hand]) for ph in player_hands): 
+        while player_hands != [] and any(isinstance(ph, Hand) for ph in player_hands): 
             for hand_index, player_hand in enumerate(player_hands): # for each player hand -> select action and play the round
-                if isinstance(player_hand, int):
+                if isinstance(player_hand, GameState):
                     continue
                 action = self.decision_table.lookupAction(player_hand, dealer_hand)
                 game.agentAction(hand_index, action) # Send selected action to the game, the game should act on the action and change the hand
                 # Additionally, game should check if the state is winning/loosing and change the hands list value to GameState value 
             player_hands = game.getAllAgentHands() # Returns int score if game is finished otherwise hand i.e. [Hand1, 1, hand3]
-        self.score += player_hands.sum() # Update the score
+        self.score += sum_gamestates(player_hands) # Update the score
             
 
 class Decision_tables():
 
     def __init__(self):
-        self.lookup_table_other = np.zeros((16,10))
-        self.lookup_table_ace = np.zeros((8,10))
-        self.lookup_table_pair = np.zeros((10,10))
+        self.lookup_table_other = np.full((16, 10), Actions.HT)
+        self.lookup_table_ace = np.full((8, 10), Actions.HT)
+        self.lookup_table_pair = np.full((10, 10), Actions.HT)
 
-    def lookup_action(self, agent_hand, dealer_hand):
+    def lookupAction(self, agent_hand, dealer_hand):
         # Include special case for J, Q and K
         if dealer_hand.hand[0].rank >= 10:
             y = 9
@@ -153,7 +153,7 @@ class Decision_tables():
             table_string += ("-" * (len(row) * 5 + 8)) + "\n"
         print(table_string)
 
-    def print_tables(self):
+    def printTables(self):
         print("Other Table:")
         self.updateTableOther()
         print("Ace Table:")
@@ -163,8 +163,6 @@ class Decision_tables():
 
 if __name__ == "__main__":
     agent = Agent()
-    tables = agent.decision_table
-    tables.print_tables()
-    agent.mutateTables()
-    agent.mutateTables()
-    tables.print_tables()
+    print(agent.getAgentFitness())
+    agent.playGame()
+    print(agent.getAgentFitness())
