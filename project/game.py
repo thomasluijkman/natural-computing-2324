@@ -160,12 +160,15 @@ class Blackjack:
         self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
         if self.dealer_hand.isBlackjack():
             self.player_hands = [GameState.Dealer_won]
+        elif self.player_hands[0].isBlackjack():
+            self.player_hands = [GameState.Agent_won]
         return (self.player_hands, self.dealer_hand)
     
     def getAllAgentHands(self):
         return self.player_hands
     
     def agentAction(self, hand_index, action):
+        print(action)
         match action:
             case Actions.HT:
                 self.agentHits(hand_index)
@@ -174,8 +177,12 @@ class Blackjack:
             case Actions.SP:
                 old_hand = self.player_hands[hand_index]
                 if old_hand.pair():
-                    new_hand_1 = Hand([old_hand[0], self.drawCard()])
-                    new_hand_2 = Hand([old_hand[1], self.drawCard()])
+                    new_hand_1 = Hand([old_hand.hand[0], self.drawCard()])
+                    if new_hand_1.isBlackjack():
+                        new_hand_1 = GameState.Agent_won
+                    new_hand_2 = Hand([old_hand.hand[1], self.drawCard()])
+                    if new_hand_2.isBlackjack():
+                        new_hand_2 = GameState.Agent_won
                     self.player_hands[hand_index] = new_hand_1
                     self.player_hands.append(new_hand_2)
                 else:
@@ -217,8 +224,12 @@ class Blackjack:
 
     def defineIfAgentWon(self, hand_index):
         player_score = self.player_hands[hand_index].scoreHand()
-        dealer_score = self.player_hands[hand_index].scoreHand()
-        if player_score < dealer_score:
+        print(self.player_hands[hand_index])
+        dealer_score = self.dealer_hand.scoreHand()
+        print(self.dealer_hand)
+        if player_score > 21:
+            self.player_hands[hand_index] = GameState.Dealer_won_doubledown if self.player_hands[hand_index].doubled else GameState.Dealer_won
+        elif player_score < dealer_score:
             self.player_hands[hand_index] = GameState.Dealer_won_doubledown if self.player_hands[hand_index].doubled else GameState.Dealer_won
         elif player_score == dealer_score:
             self.player_hands[hand_index] = GameState.Agent_draw

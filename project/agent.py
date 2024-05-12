@@ -51,9 +51,9 @@ class Agent:
 class Decision_tables():
 
     def __init__(self):
-        self.lookup_table_other = np.full((16, 10), Actions.HT)
-        self.lookup_table_ace = np.full((8, 10), Actions.HT)
-        self.lookup_table_pair = np.full((10, 10), Actions.HT)
+        self.lookup_table_other = np.random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS], size=(16, 10))
+        self.lookup_table_ace = np.random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS], size=(8, 10))
+        self.lookup_table_pair = np.random.choice(list(Actions), size=(10, 10))
 
     def lookupAction(self, agent_hand, dealer_hand):
         # Include special case for J, Q and K
@@ -71,7 +71,7 @@ class Decision_tables():
         elif agent_hand.aces() > 0:
             #compute index 
             x = agent_hand.scoreHand() - 11 - 2 # minus ace - 2 for indexing
-            return self.lookup_table_pair[x][y]
+            return self.lookup_table_ace[x][y]
         else:
             #compute index
             x = agent_hand.scoreHand() - 5
@@ -162,7 +162,9 @@ class Decision_tables():
         self.printTablePair()    
 
 if __name__ == "__main__":
-    agent = Agent()
-    print(agent.getAgentFitness())
-    agent.playGame()
-    print(agent.getAgentFitness())
+    while(True):
+        agent = Agent()
+        agent.decision_table.printTables()
+        print(agent.getAgentFitness())
+        agent.playGame()
+        print(agent.getAgentFitness())
