@@ -136,12 +136,8 @@ class Blackjack:
         - dealer_reshuffle (bool): true if the dealer should reshuffle at the end of the round"""
     def __init__(self, no_decks=1):
         # Initialise deck for the game
-        deck = []
-        for _ in range(no_decks):
-            deck += self.newDeck()
-        self.shoe = deck
-        random.shuffle(self.shoe)
         self.no_decks = no_decks
+        self.shuffleDeck()
 
         # Initialise list of played cards
         self.played = []
@@ -156,6 +152,10 @@ class Blackjack:
         self.dealer_reshuffle = False
 
     def startGame(self):
+        self.player_hands = []
+        self.dealer_hand = Hand()
+        if self.dealer_reshuffle:
+            self.shuffleDeck()
         self.player_hands.append(Hand([self.drawCard(), self.drawCard()]))
         self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
         if self.dealer_hand.isBlackjack():
@@ -164,11 +164,18 @@ class Blackjack:
             self.player_hands = [GameState.Agent_won]
         return (self.player_hands, self.dealer_hand)
     
+    def shuffleDeck(self):
+        deck = []
+        for _ in range(self.no_decks):
+            deck += self.newDeck()
+        self.shoe = deck
+        random.shuffle(self.shoe)
+        self.shoe = self.shoe[:-20] + [RESHUFFLE_CARD] + self.shoe[-20:]
+
     def getAllAgentHands(self):
         return self.player_hands
     
     def agentAction(self, hand_index, action):
-        print(action)
         match action:
             case Actions.HT:
                 self.agentHits(hand_index)
@@ -215,18 +222,14 @@ class Blackjack:
                 self.player_hands[hand_index] = GameState.Agent_won_doubledown
             else:
                 self.player_hands[hand_index] = GameState.Agent_won
-
-    
+   
     def agentStands(self, hand_index):
         self.dealerDrawsUntil17()
         self.defineIfAgentWon(hand_index)
         
-
     def defineIfAgentWon(self, hand_index):
         player_score = self.player_hands[hand_index].scoreHand()
-        print(self.player_hands[hand_index])
         dealer_score = self.dealer_hand.scoreHand()
-        print(self.dealer_hand)
         if player_score > 21:
             self.player_hands[hand_index] = GameState.Dealer_won_doubledown if self.player_hands[hand_index].doubled else GameState.Dealer_won
         elif player_score < dealer_score:
