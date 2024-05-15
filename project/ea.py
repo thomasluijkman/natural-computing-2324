@@ -1,17 +1,17 @@
-from agent import Agent, DecisionTables
+from agent import Agent, DecisionTables, LOOKUP_ACE, LOOKUP_PAIR, LOOKUP_REGULAR
 from game import Actions
 import random
 import sys
 import numpy as np
 
-K = 2
+K = 20
 SEED = 42
-POP_SIZE = 200
+POP_SIZE = 50
 TABLE_SIZE = (16*10)+(8*10)+(10*10)
 MU = 1 / TABLE_SIZE
-RUNS_PER_AGENT = 100
 MAX_GENS = 100
-NR_ROUNDS = 10
+NR_ROUNDS = 1000
+CROSSOVER = True
 
 # Evolutionary algorithms
 def initialise_population():
@@ -23,12 +23,11 @@ def initialise_population():
 def evolutionary_algorithm():
     # Step 1: Population of candidate solutions
     population = initialise_population()
-    distances = []
     # Repeat steps 2-4
     i = 0
     while i < MAX_GENS:
         print(f'Generation {i}/{MAX_GENS}')
-        run_experiment(population, NR_ROUNDS)
+        run_experiment(population)
         new_population = []
         # Step 2: Determine fitness for every solution
         pop_fitness = calc_population_fitness(population)
@@ -37,7 +36,7 @@ def evolutionary_algorithm():
             # Step 3: Select parents for new generation
             parents = get_parents_with_fitness(pop_with_fitness)
             # Step 4a: Introduce variation via crossover
-            new_population += crossover(parents[0], parents[1])
+            new_population += crossover(parents[0], parents[1]) if CROSSOVER else parents
         assert(len(new_population) == POP_SIZE)
         # Step 4b: Introduce variation via mutation
         if MU > 0:
@@ -45,14 +44,15 @@ def evolutionary_algorithm():
         else:
             population = new_population.copy()
         i += 1
+    run_experiment(population)
     return find_fittest(population) # negative return means max generations were reached without target string being found
 
-def run_experiment(population, nr_rounds):
+def run_experiment(population):
     i = 1
     for agent in population:
-        print(f'{i}')
+        #print(f'{i}')
         i += 1
-        agent.playGame(nr_rounds)
+        agent.playGame(NR_ROUNDS)
 
 def calc_population_fitness(population):
     pop_fitness = []
@@ -68,11 +68,15 @@ def get_parents_with_fitness(pop_with_fitness):
     return (parent0, parent1)
 
 def find_fittest(population):
-    highest = -sys.maxint - 1
-    for i, agent in enumerate(population):
-        if agent.getAgentFitness() > highest:
-            highest = agent.getAgentFitness()
-    return i
+    highest = -sys.maxsize - 1
+    best_agent = None
+    for agent in population:
+        fitness = agent.getAgentFitness()
+        print(fitness)
+        if fitness > highest:
+            highest = fitness
+            best_agent = agent
+    return best_agent, highest
         
 def crossover(a, b):
     a_tables = a.decision_tables.getAllTables()
@@ -121,18 +125,17 @@ def mutate(agent):
         for x_pos, x in enumerate(table):
             for y_pos, y in enumerate(x):
                 if random.random() <= MU:
-                    if table_num == 2: # If pairs table
+                    if table_num == LOOKUP_PAIR: # If pairs table
                         new_action = random.choice(list(Actions))
                     else:
                         new_action = random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS])
-                    agent.decision_tables.updateTableCell(table_num, (x_pos,y_pos), new_action)
-    return agent
+                    tables[table_num][x_pos][y_pos] = new_action
+    new_agent = Agent(tables)
+    return new_agent
 
 def main():
-    random.seed(SEED)
-    print(evolutionary_algorithm())
-
-
+    agent, fitness = evolutionary_algorithm()
+    print(f'Fittest agent: {fitness}\nDecision tables: {str(agent)}')
 
 if __name__ == '__main__':
     main()
