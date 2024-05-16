@@ -3,14 +3,16 @@ from game import Actions
 import random
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 
 K = 20
 SEED = 42
-POP_SIZE = 50
+POP_SIZE = 200
 TABLE_SIZE = (16*10)+(8*10)+(10*10)
 MU = 1 / TABLE_SIZE
-MAX_GENS = 100
-NR_ROUNDS = 1000
+MAX_GENS = 1000
+NR_ROUNDS = 100
 CROSSOVER = True
 
 # Evolutionary algorithms
@@ -25,9 +27,12 @@ def evolutionary_algorithm():
     population = initialise_population()
     # Repeat steps 2-4
     i = 0
+    # Keep track of fitest agents
+    fitness_over_gen = []
     while i < MAX_GENS:
         print(f'Generation {i}/{MAX_GENS}')
         run_experiment(population)
+        fitness_over_gen.append(find_fittest(population))
         new_population = []
         # Step 2: Determine fitness for every solution
         pop_fitness = calc_population_fitness(population)
@@ -45,7 +50,8 @@ def evolutionary_algorithm():
             population = new_population.copy()
         i += 1
     run_experiment(population)
-    return find_fittest(population) # negative return means max generations were reached without target string being found
+    fitness_over_gen.append(find_fittest(population))
+    return fitness_over_gen
 
 def run_experiment(population):
     i = 1
@@ -72,7 +78,6 @@ def find_fittest(population):
     best_agent = None
     for agent in population:
         fitness = agent.getAgentFitness()
-        print(fitness)
         if fitness > highest:
             highest = fitness
             best_agent = agent
@@ -133,9 +138,30 @@ def mutate(agent):
     new_agent = Agent(tables)
     return new_agent
 
+def plot_fitness_over_generations(fitnesses):
+    generations = range(1, len(fitnesses) + 1)
+    plt.plot(generations, fitnesses)
+    plt.xlabel('Generation')
+    plt.ylabel('Fitness')
+    plt.title('Fitness Over Generations')
+    plt.grid(True)
+    plt.savefig("results/fitness.png")
+
+def save_agent_to_file(agent, filename_txt, filename_pickle):
+    with open(filename_txt, 'w') as file:
+        file.write(str(agent)) 
+    with open(filename_pickle, 'wb') as file:
+        pickle.dump(agent, file) # Pickling in case we want to run experiments on the best agent.
+
 def main():
-    agent, fitness = evolutionary_algorithm()
-    print(f'Fittest agent: {fitness}\nDecision tables: {str(agent)}')
+    agent_fitness_pairs = evolutionary_algorithm()
+    agents, fitnesses = zip(*agent_fitness_pairs)
+    print(f'Fittest agent: {fitnesses[-1]}\nDecision tables: {str(agents[-1])}')
+
+    # Save the last agent to a text file
+    save_agent_to_file(agents[-1], "results/best_agent_table.txt", "results/best_agent.pkl")
+
+    plot_fitness_over_generations(fitnesses)
 
 if __name__ == '__main__':
     main()
