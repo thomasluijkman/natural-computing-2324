@@ -14,7 +14,7 @@ class Agent:
         else:
             self.decision_tables = decision_tables 
         
-    def getAgentFitness(self):
+    def getAgentFitness(self, nr_rounds):
         return self.score
     
     def getAgentStrategy(self):

@@ -8,9 +8,9 @@ import pickle
 
 K = 20
 SEED = 42
-POP_SIZE = 200
+POP_SIZE = 100
 TABLE_SIZE = (16*10)+(8*10)+(10*10)
-MU = 1 / TABLE_SIZE
+MU = 3 / TABLE_SIZE
 MAX_GENS = 1000
 NR_ROUNDS = 100
 CROSSOVER = True
@@ -21,6 +21,128 @@ def initialise_population():
     for _ in range(POP_SIZE):
         population.append(Agent())
     return population
+
+def run_experiment(population):
+    i = 1
+    for agent in population:
+        #print(f'{i}')
+        i += 1
+        agent.playGame(NR_ROUNDS)
+
+def calc_population_fitness(population):
+    pop_fitness = []
+    for individual in population:
+        pop_fitness.append(individual.getAgentFitness(NR_ROUNDS))
+    return pop_fitness
+
+def get_parents_with_fitness(pop_with_fitness):
+    sample = random.choices(pop_with_fitness, k=K)
+    parent0 = max(sample, key=lambda item: item[1])[0]
+    sample = random.choices(pop_with_fitness, k=K)
+    parent1 = max(sample, key=lambda item: item[1])[0]
+    return (parent0, parent1)
+
+def find_fittest(population):
+    highest = -sys.maxsize - 1
+    best_agent = None
+    for agent in population:
+        fitness = agent.getAgentFitness(NR_ROUNDS)
+        if fitness > highest:
+            highest = fitness
+            best_agent = agent
+    return best_agent, highest
+        
+def crossover_rows(a, b):
+    a_tables = a.decision_tables.getAllTables()
+    b_tables = b.decision_tables.getAllTables()
+
+    child1_tables = []
+    child2_tables = []
+
+    for (table_a, table_b) in list(zip(a_tables, b_tables)):
+        # Get the dimensions of the arrays
+        rows, cols = table_a.shape
+
+        # Randomly select the row index for crossover
+        crossover_point = random.randint(1, rows-2)
+
+        # Initialize an empty array to store the result
+        child1_table = np.empty((rows, cols), dtype=table_a.dtype)
+        child2_table = np.empty((rows, cols), dtype=table_a.dtype)
+
+        # Copy rows from array a and b based on the crossover point
+        child1_table[:crossover_point, :] = table_a[:crossover_point, :]
+        child1_table[crossover_point:, :] = table_b[crossover_point:, :]
+
+        child2_table[:crossover_point, :] = table_b[:crossover_point, :]
+        child2_table[crossover_point:, :] = table_a[crossover_point:, :]
+
+        child1_tables.append(child1_table)
+        child2_tables.append(child2_table)
+
+    child1 = Agent(decision_tables=DecisionTables(all_tables=child1_tables))
+    child2 = Agent(decision_tables=DecisionTables(all_tables=child2_tables))
+
+    return [child1, child2]
+
+def crossover_quadrants(a, b):
+    a_tables = a.decision_tables.getAllTables()
+    b_tables = b.decision_tables.getAllTables()
+
+    child1_tables = []
+    child2_tables = []
+
+    for (table_a, table_b) in list(zip(a_tables, b_tables)):
+        rows, cols = table_a.shape
+
+        c_row = random.randint(1, rows-2)
+        c_col = random.randint(1, cols-2)
+
+        # Initialize an empty array to store the result
+        child1_table = np.empty((rows, cols), dtype=table_a.dtype)
+        child2_table = np.empty((rows, cols), dtype=table_b.dtype)
+
+        # Copy the children from four quadrants
+        # # Quadrant 1
+        child1_table[:c_row, :c_col] = table_a[:c_row, :c_col]
+        child2_table[:c_row, :c_col] = table_b[:c_row, :c_col]
+
+        # # Quadrant 2
+        child1_table[c_row:, :c_col] = table_b[c_row:, :c_col]
+        child2_table[c_row:, :c_col] = table_a[c_row:, :c_col]
+
+        # # Quadrant 3
+        child1_table[:c_row, c_col:] = table_a[:c_row, c_col:]
+        child2_table[:c_row, c_col:] = table_b[:c_row, c_col:]
+
+        # # Quadrant 4
+        child1_table[c_row:, c_col:] = table_b[c_row:, c_col:]
+        child2_table[c_row:, c_col:] = table_a[c_row:, c_col:]
+
+        child1_tables.append(child1_table)
+        child2_tables.append(child2_table)
+
+    child1 = Agent(decision_tables=DecisionTables(all_tables=child1_tables))
+    child2 = Agent(decision_tables=DecisionTables(all_tables=child2_tables))
+
+    return [child1, child2]
+
+
+def mutate(agent):
+    tables = agent.decision_tables.getAllTables()
+    for table_num, table in enumerate(tables):
+        for x_pos, x in enumerate(table):
+            for y_pos, y in enumerate(x):
+                if random.random() <= MU:
+                    if table_num == LOOKUP_PAIR: # If pairs table
+                        new_action = random.choice(list(Actions))
+                    else:
+                        new_action = random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS])
+                    tables[table_num][x_pos][y_pos] = new_action
+    new_agent = Agent(tables)
+    return new_agent
+
+crossover = crossover_quadrants
 
 def evolutionary_algorithm():
     # Step 1: Population of candidate solutions
@@ -53,91 +175,6 @@ def evolutionary_algorithm():
     fitness_over_gen.append(find_fittest(population))
     return fitness_over_gen
 
-def run_experiment(population):
-    i = 1
-    for agent in population:
-        #print(f'{i}')
-        i += 1
-        agent.playGame(NR_ROUNDS)
-
-def calc_population_fitness(population):
-    pop_fitness = []
-    for individual in population:
-        pop_fitness.append(individual.getAgentFitness())
-    return pop_fitness
-
-def get_parents_with_fitness(pop_with_fitness):
-    sample = random.choices(pop_with_fitness, k=K)
-    parent0 = max(sample, key=lambda item: item[1])[0]
-    sample = random.choices(pop_with_fitness, k=K)
-    parent1 = max(sample, key=lambda item: item[1])[0]
-    return (parent0, parent1)
-
-def find_fittest(population):
-    highest = -sys.maxsize - 1
-    best_agent = None
-    for agent in population:
-        fitness = agent.getAgentFitness()
-        if fitness > highest:
-            highest = fitness
-            best_agent = agent
-    return best_agent, highest
-        
-def crossover(a, b):
-    a_tables = a.decision_tables.getAllTables()
-    b_tables = b.decision_tables.getAllTables()
-
-    assert(len(a_tables) == len(b_tables))
-
-    child1_tables = []
-    child2_tables = []
-
-    parents_tables = list(zip(a_tables, b_tables))
-    for i, (table_a, table_b) in enumerate(parents_tables):
-        # Get the dimensions of the arrays
-        rows, cols = table_a.shape
-
-        # Randomly select the row index for crossover
-        crossover_point = np.random.randint(1, rows)
-
-        # Initialize an empty array to store the result
-        child1_table = np.empty((rows, cols), dtype=table_a.dtype)
-        child2_table = np.empty((rows, cols), dtype=table_a.dtype)
-
-        # Copy rows from array a and b based on the crossover point
-        child1_table[:crossover_point, :] = table_a[:crossover_point, :]
-        child1_table[crossover_point:, :] = table_b[crossover_point:, :]
-
-        child2_table[:crossover_point, :] = table_b[:crossover_point, :]
-        child2_table[crossover_point:, :] = table_a[crossover_point:, :]
-
-        child1_tables.append(child1_table)
-        child2_tables.append(child2_table)
-
-    assert(len(a_tables) == len(child1_tables))
-    assert(len(b_tables) == len(child2_tables))
-    assert(len(child1_tables) == 3)
-    assert(len(child2_tables) == 3)
-
-    child1 = Agent(decision_tables=DecisionTables(child1_tables[0], child1_tables[1], child1_tables[2]))
-    child2 = Agent(decision_tables=DecisionTables(child2_tables[0], child2_tables[1], child2_tables[2]))
-
-    return [child1, child2]
-
-def mutate(agent):
-    tables = agent.decision_tables.getAllTables()
-    for table_num, table in enumerate(tables):
-        for x_pos, x in enumerate(table):
-            for y_pos, y in enumerate(x):
-                if random.random() <= MU:
-                    if table_num == LOOKUP_PAIR: # If pairs table
-                        new_action = random.choice(list(Actions))
-                    else:
-                        new_action = random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS])
-                    tables[table_num][x_pos][y_pos] = new_action
-    new_agent = Agent(tables)
-    return new_agent
-
 def plot_fitness_over_generations(fitnesses):
     generations = range(1, len(fitnesses) + 1)
     plt.plot(generations, fitnesses)
@@ -154,6 +191,7 @@ def save_agent_to_file(agent, filename_txt, filename_pickle):
         pickle.dump(agent, file) # Pickling in case we want to run experiments on the best agent.
 
 def main():
+    random.seed(SEED)
     agent_fitness_pairs = evolutionary_algorithm()
     agents, fitnesses = zip(*agent_fitness_pairs)
     print(f'Fittest agent: {fitnesses[-1]}\nDecision tables: {str(agents[-1])}')

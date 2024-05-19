@@ -1,79 +1,79 @@
 Regular Table:
    | A  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10  
 -------------------------------------------------------
-5  | ST | DS | DH | ST | DS | DS | HT | HT | DH | ST  
+5  | ST | DS | ST | DS | HT | DS | DH | DS | DH | HT  
 -------------------------------------------------------
-6  | ST | DH | HT | DH | ST | DS | DS | HT | DH | HT  
+6  | HT | ST | ST | DS | ST | DH | DS | DS | ST | HT  
 -------------------------------------------------------
-7  | ST | ST | HT | DH | HT | ST | ST | HT | HT | ST  
+7  | DS | HT | ST | HT | ST | HT | DH | DS | ST | ST  
 -------------------------------------------------------
-8  | HT | HT | ST | HT | HT | ST | DH | HT | ST | HT  
+8  | DS | HT | ST | ST | DH | DS | HT | DS | ST | ST  
 -------------------------------------------------------
-9  | ST | HT | HT | HT | HT | HT | HT | DH | DS | HT  
+9  | DS | ST | ST | ST | DS | ST | HT | DS | DH | HT  
 -------------------------------------------------------
-10 | DH | HT | HT | HT | HT | HT | HT | DS | DH | HT  
+10 | HT | DS | DS | DH | DS | ST | DS | ST | ST | HT  
 -------------------------------------------------------
-11 | HT | HT | DS | HT | HT | HT | HT | HT | DS | HT  
+11 | DS | DH | HT | ST | DS | HT | HT | DS | DS | ST  
 -------------------------------------------------------
-12 | ST | ST | HT | HT | HT | HT | HT | HT | HT | HT  
+12 | HT | DS | HT | HT | ST | HT | HT | HT | HT | HT  
 -------------------------------------------------------
-13 | ST | HT | ST | ST | HT | HT | HT | HT | HT | HT  
+13 | HT | DH | ST | HT | ST | DS | HT | ST | DH | HT  
 -------------------------------------------------------
-14 | ST | ST | HT | HT | HT | ST | HT | HT | DS | HT  
+14 | ST | DS | ST | DS | HT | HT | ST | HT | DH | HT  
 -------------------------------------------------------
-15 | HT | ST | HT | ST | HT | HT | ST | DS | DH | HT  
+15 | ST | ST | HT | DS | HT | HT | DS | ST | HT | HT  
 -------------------------------------------------------
-16 | HT | HT | DH | HT | ST | HT | HT | HT | HT | HT  
+16 | DH | DS | ST | HT | ST | ST | ST | DS | HT | HT  
 -------------------------------------------------------
-17 | DS | HT | ST | HT | DH | HT | DS | DH | DH | HT  
+17 | DS | DS | ST | ST | HT | HT | HT | DH | DH | ST  
 -------------------------------------------------------
-18 | ST | ST | HT | HT | ST | ST | ST | ST | ST | ST  
+18 | HT | DH | ST | ST | DH | ST | ST | DS | HT | ST  
 -------------------------------------------------------
-19 | ST | DH | DS | HT | ST | ST | DS | ST | HT | ST  
+19 | ST | ST | HT | ST | HT | ST | HT | HT | ST | ST  
 -------------------------------------------------------
-20 | ST | ST | ST | ST | ST | ST | ST | ST | ST | ST  
+20 | DS | DH | ST | ST | DS | ST | DH | ST | ST | ST  
 -------------------------------------------------------
 
 Ace Table:
       | A  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10  
 --------------------------------------------------------
-(A,2) | ST | DH | ST | ST | HT | ST | HT | DH | ST | HT  
+(A,2) | HT | ST | HT | HT | DH | DH | DS | ST | DS | HT  
 --------------------------------------------------------
-(A,3) | ST | HT | DH | HT | DS | ST | DS | DS | ST | HT  
+(A,3) | DS | DS | DH | DS | HT | ST | DH | HT | DS | DS  
 --------------------------------------------------------
-(A,4) | ST | DS | ST | DS | DH | ST | DS | HT | DS | HT  
+(A,4) | DH | HT | HT | DS | ST | DH | HT | ST | DH | HT  
 --------------------------------------------------------
-(A,5) | HT | ST | HT | HT | DS | DH | HT | HT | DH | HT  
+(A,5) | HT | ST | DS | DH | DH | HT | ST | DH | DH | HT  
 --------------------------------------------------------
-(A,6) | DS | ST | DH | DH | HT | DH | HT | DH | ST | HT  
+(A,6) | HT | DH | DS | ST | HT | ST | HT | DH | DH | HT  
 --------------------------------------------------------
-(A,7) | HT | DS | HT | DS | HT | ST | HT | DS | DH | ST  
+(A,7) | DS | DH | ST | HT | HT | DH | ST | ST | ST | HT  
 --------------------------------------------------------
-(A,8) | HT | DS | DH | DH | ST | DS | ST | DS | ST | ST  
+(A,8) | HT | ST | ST | DS | ST | ST | HT | DS | DH | ST  
 --------------------------------------------------------
-(A,9) | DS | ST | DH | DS | DS | ST | DH | ST | HT | ST  
+(A,9) | ST | ST | ST | ST | ST | HT | HT | DH | DH | DS  
 --------------------------------------------------------
 
 Pair Table:
         | A  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10  
 ----------------------------------------------------------
-(2 ,2 ) | ST | DH | DH | DS | SP | DH | DS | HT | DH | HT  
+(2 ,2 ) | DS | HT | HT | DS | SP | HT | HT | DH | ST | HT  
 ----------------------------------------------------------
-(3 ,3 ) | HT | ST | DH | HT | DH | HT | DH | SP | ST | HT  
+(3 ,3 ) | ST | DH | ST | DS | ST | HT | SP | ST | HT | DS  
 ----------------------------------------------------------
-(4 ,4 ) | ST | DS | HT | DH | DH | ST | HT | HT | HT | DS  
+(4 ,4 ) | DH | HT | SP | DS | HT | SP | ST | ST | ST | DH  
 ----------------------------------------------------------
-(5 ,5 ) | ST | ST | SP | ST | DH | ST | ST | SP | ST | ST  
+(5 ,5 ) | ST | HT | HT | SP | DS | SP | DH | DS | SP | DS  
 ----------------------------------------------------------
-(6 ,6 ) | HT | DS | DS | DH | DS | HT | SP | HT | DH | DS  
+(6 ,6 ) | DH | DS | DH | DS | ST | ST | DH | HT | SP | DS  
 ----------------------------------------------------------
-(7 ,7 ) | DH | HT | DS | ST | HT | ST | DS | SP | HT | ST  
+(7 ,7 ) | DH | SP | SP | HT | HT | DS | SP | ST | ST | DS  
 ----------------------------------------------------------
-(8 ,8 ) | SP | DH | DH | HT | DS | HT | SP | DH | ST | DH  
+(8 ,8 ) | HT | DH | DH | DS | HT | SP | DH | DH | HT | ST  
 ----------------------------------------------------------
-(9 ,9 ) | DH | SP | HT | HT | SP | SP | DH | HT | HT | DS  
+(9 ,9 ) | HT | ST | SP | SP | HT | HT | DH | HT | HT | ST  
 ----------------------------------------------------------
-(10,10) | DH | DS | DS | DH | ST | HT | ST | HT | DH | DH  
+(10,10) | DH | SP | DS | DH | SP | ST | DH | HT | SP | SP  
 ----------------------------------------------------------
-(A ,A ) | HT | ST | ST | ST | HT | ST | ST | DS | ST | ST  
+(A ,A ) | DH | HT | ST | HT | ST | ST | HT | DH | SP | ST  
 ----------------------------------------------------------

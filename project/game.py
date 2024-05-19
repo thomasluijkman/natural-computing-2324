@@ -66,6 +66,14 @@ class Card:
             case 13: rank = "K"
             case _:  rank = str(self.rank)
         return suit+rank
+    
+    def count(self):
+        if self.rank <= 6:
+            return 1
+        if self.rank >= 7 and self.rank <= 9:
+            return 0
+        if self.rank >= 10:
+            return -1
 
 class Hand:
     def __init__(self, hand=[]):
@@ -151,11 +159,14 @@ class Blackjack:
         self.dealer_hand = Hand()
         self.dealer_reshuffle = False
 
+        self.count = 0
+
     def startGame(self):
         self.player_hands = []
         self.dealer_hand = Hand()
         if self.dealer_reshuffle:
             self.shuffleDeck()
+            self.count = 0
         self.player_hands.append(Hand([self.drawCard(), self.drawCard()]))
         self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
         if self.dealer_hand.isBlackjack():
@@ -281,6 +292,7 @@ class Blackjack:
         if drawn == RESHUFFLE_CARD:
             self.dealer_reshuffle = True
             drawn = self.drawCard()
+        self.count += drawn.count()
         return drawn
     
     def payout(self, verbose=False):
