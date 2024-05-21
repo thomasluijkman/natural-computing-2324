@@ -4,37 +4,54 @@ import random
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 import pickle
+import multiprocessing as mp
 
 K = 20
 SEED = 42
 POP_SIZE = 100
 TABLE_SIZE = (16*10)+(8*10)+(10*10)
 MU = 3 / TABLE_SIZE
-MAX_GENS = 1000
-NR_ROUNDS = 100
+MAX_GENS = 250
+NR_ROUNDS = 100000
 CROSSOVER = True
 
-# Evolutionary algorithms
+########################################
+# Functions for evolutionary algorithm #
+########################################
+
+# Create population with random agents
 def initialise_population():
     population = []
     for _ in range(POP_SIZE):
         population.append(Agent())
     return population
 
-def run_experiment(population):
-    i = 1
-    for agent in population:
-        #print(f'{i}')
-        i += 1
-        agent.playGame(NR_ROUNDS)
+# Let every agent play Blackjack for [NR_ROUNDS] rounds
+# def run_experiment(population):
+#     i = 1
+#     for agent in population:
+#         i += 1
+#         agent.playGame(NR_ROUNDS)
 
+def play_game(agent):
+    agent.playGame(NR_ROUNDS)
+    return agent
+
+def run_experiment(population):
+    with mp.Pool() as pool:
+        updated_population = pool.map(play_game, population)
+    return updated_population
+
+# Returns a list with the fitness score for each individual
 def calc_population_fitness(population):
     pop_fitness = []
     for individual in population:
         pop_fitness.append(individual.getAgentFitness(NR_ROUNDS))
     return pop_fitness
 
+# Returns the two best individuals from a random selection of [K] individuals in the population
 def get_parents_with_fitness(pop_with_fitness):
     sample = random.choices(pop_with_fitness, k=K)
     parent0 = max(sample, key=lambda item: item[1])[0]
@@ -42,6 +59,7 @@ def get_parents_with_fitness(pop_with_fitness):
     parent1 = max(sample, key=lambda item: item[1])[0]
     return (parent0, parent1)
 
+# Finds the fittest individual in a population
 def find_fittest(population):
     highest = -sys.maxsize - 1
     best_agent = None
@@ -144,20 +162,24 @@ def mutate(agent):
 
 crossover = crossover_quadrants
 
-def evolutionary_algorithm():
+def evolutionary_algorithm(verbose=True):
     # Step 1: Population of candidate solutions
     population = initialise_population()
     # Repeat steps 2-4
     i = 0
     # Keep track of fitest agents
     fitness_over_gen = []
+    #run for set amount of generations
+    print("Using " + str(mp.cpu_count() - 2) + " cores out of a total of " + str(mp.cpu_count()) + " present on this machine.")
+    print("Running for " + str(MAX_GENS) + " generations with " + str(POP_SIZE) + " agents each with " + str(NR_ROUNDS) + " epochs each.")
     while i < MAX_GENS:
-        print(f'Generation {i}/{MAX_GENS}')
-        run_experiment(population)
+        print(f'Generation {i+1}/{MAX_GENS}') if verbose else None
+        population = run_experiment(population)
         fitness_over_gen.append(find_fittest(population))
         new_population = []
         # Step 2: Determine fitness for every solution
         pop_fitness = calc_population_fitness(population)
+        print(pop_fitness)
         pop_with_fitness = list(zip(population, pop_fitness))
         for _ in range(int(POP_SIZE / 2)):
             # Step 3: Select parents for new generation
@@ -171,7 +193,7 @@ def evolutionary_algorithm():
         else:
             population = new_population.copy()
         i += 1
-    run_experiment(population)
+    population = run_experiment(population)
     fitness_over_gen.append(find_fittest(population))
     return fitness_over_gen
 
@@ -190,8 +212,7 @@ def save_agent_to_file(agent, filename_txt, filename_pickle):
     with open(filename_pickle, 'wb') as file:
         pickle.dump(agent, file) # Pickling in case we want to run experiments on the best agent.
 
-def main():
-    random.seed(SEED)
+def run_single_algorithm():
     agent_fitness_pairs = evolutionary_algorithm()
     agents, fitnesses = zip(*agent_fitness_pairs)
     print(f'Fittest agent: {fitnesses[-1]}\nDecision tables: {str(agents[-1])}')
@@ -200,6 +221,35 @@ def main():
     save_agent_to_file(agents[-1], "results/best_agent_table.txt", "results/best_agent.pkl")
 
     plot_fitness_over_generations(fitnesses)
+
+def test_crossovers():
+    global MU
+
+    def test_crossover_func(function, fun_name):
+        global crossover
+        crossover = function
+        crossover_result = []
+        for i in range(10):
+            print(f'Testing iteration {i+1} of 10 with crossover function {fun_name}')
+            print(f'Started current test at {time.strftime("%H:%M:%S",time.localtime())}')
+            agent_fitness_pairs = evolutionary_algorithm(verbose=True)
+            _, fitnesses = zip(*agent_fitness_pairs)
+            avg_over_five = np.average(fitnesses[-5:])
+            crossover_result.append(avg_over_five)
+        return crossover_result
+    
+    rows_result = test_crossover_func(crossover_rows, 'crossover_rows')
+    quad_result = test_crossover_func(crossover_quadrants, 'crossover_quadrants')
+
+    with open('crossover_test_result.txt', 'w+') as f:
+        f.write('ROWS TEST RESULT:\n')
+        f.write(str(rows_result) + '\n')
+        f.write('QUADRANTS TEST RESULT:\n')
+        f.write(str(quad_result) + '\n')
+
+def main():
+    random.seed(SEED)
+    run_single_algorithm()
 
 if __name__ == '__main__':
     main()

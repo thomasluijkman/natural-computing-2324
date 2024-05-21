@@ -15,7 +15,7 @@ class Agent:
             self.decision_tables = decision_tables 
         
     def getAgentFitness(self, nr_rounds):
-        return self.score
+        return self.score / nr_rounds
     
     def getAgentStrategy(self):
         return self.decision_tables
