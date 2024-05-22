@@ -179,7 +179,6 @@ def evolutionary_algorithm(verbose=True):
         new_population = []
         # Step 2: Determine fitness for every solution
         pop_fitness = calc_population_fitness(population)
-        print(pop_fitness)
         pop_with_fitness = list(zip(population, pop_fitness))
         for _ in range(int(POP_SIZE / 2)):
             # Step 3: Select parents for new generation
@@ -223,8 +222,6 @@ def run_single_algorithm():
     plot_fitness_over_generations(fitnesses)
 
 def test_crossovers():
-    global MU
-
     def test_crossover_func(function, fun_name):
         global crossover
         crossover = function
@@ -247,9 +244,36 @@ def test_crossovers():
         f.write('QUADRANTS TEST RESULT:\n')
         f.write(str(quad_result) + '\n')
 
+def test_different_mu():
+    global MU
+
+    mus = []
+    fitness_per_mu = []
+    for i in np.arange(1/TABLE_SIZE, 10/TABLE_SIZE, 1/TABLE_SIZE):
+        MU = i
+        print(f'Testing with MU = {MU}')
+        mus.append(i)
+        agent_fitness_pairs = evolutionary_algorithm(verbose=False)
+        _, fitnesses = zip(*agent_fitness_pairs)
+        fitness_per_mu.append(fitnesses)
+    
+    iterations = len(mus)
+    i = 0
+    for fitnesses, mu in zip(fitness_per_mu, mus):
+        RED = 255*(i/iterations)/255
+        BLUE = 255*(1-(i/iterations))/255
+        plt.plot(fitnesses, label=f'MU = {"{:.4f}".format(mu)}', color=(RED,0,BLUE))
+        i += 1
+    plt.xlabel('Generations')
+    plt.ylabel('Fitness')
+    plt.legend(loc="lower right", ncol=2, bbox_to_anchor=(1.1,0))
+    plt.title('Fitness over generations with multiple mutation values')
+    plt.grid(True)
+    plt.savefig('results/fitness-different-mu.png')
+
 def main():
     random.seed(SEED)
-    run_single_algorithm()
+    test_different_mu()
 
 if __name__ == '__main__':
     main()
