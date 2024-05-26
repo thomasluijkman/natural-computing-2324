@@ -167,7 +167,6 @@ class Blackjack:
         if self.dealer_reshuffle:
             self.shuffleDeck()
             self.count = 0
-            self.dealer_reshuffle = False
         self.player_hands.append(Hand([self.drawCard(), self.drawCard()]))
         self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
         if self.dealer_hand.isBlackjack():
@@ -183,6 +182,7 @@ class Blackjack:
         self.shoe = deck
         random.shuffle(self.shoe)
         self.shoe = self.shoe[:-20] + [RESHUFFLE_CARD] + self.shoe[-20:]
+        self.dealer_reshuffle = False
 
     def getAllAgentHands(self):
         return self.player_hands
