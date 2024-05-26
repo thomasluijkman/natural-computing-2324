@@ -11,7 +11,7 @@ import multiprocessing as mp
 K = 20
 SEED = 42
 POP_SIZE = 100
-TABLE_SIZE = (16*10)+(8*10)+(10*10)
+TABLE_SIZE = (16*10)+(8*10)+(10*10) #360
 MU = 3 / TABLE_SIZE
 MAX_GENS = 250
 NR_ROUNDS = 100000
@@ -249,8 +249,8 @@ def test_different_mu():
 
     mus = []
     fitness_per_mu = []
-    for i in np.arange(1/TABLE_SIZE, 10/TABLE_SIZE, 1/TABLE_SIZE):
-        MU = i
+    for i in np.arange(1, 10, 1):
+        MU = i/TABLE_SIZE
         print(f'Testing with MU = {MU}')
         mus.append(i)
         agent_fitness_pairs = evolutionary_algorithm(verbose=False)
@@ -262,7 +262,7 @@ def test_different_mu():
     for fitnesses, mu in zip(fitness_per_mu, mus):
         RED = 255*(i/iterations)/255
         BLUE = 255*(1-(i/iterations))/255
-        plt.plot(fitnesses, label=f'MU = {"{:.4f}".format(mu)}', color=(RED,0,BLUE))
+        plt.plot(fitnesses, label=f'MU = {mu}/TS', color=(RED,0,BLUE))
         i += 1
     plt.xlabel('Generations')
     plt.ylabel('Fitness')
@@ -277,4 +277,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
