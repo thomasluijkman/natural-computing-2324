@@ -175,7 +175,7 @@ def evolutionary_algorithm(verbose=True):
     mu_start = 10
     mu_end = 1
     mu_decrement = (mu_start - mu_end) / MAX_GENS
-    MU = 10 / TAB
+    MU = 10 / TABLE_SIZE
     while i < MAX_GENS:
         print(f'Generation {i+1}/{MAX_GENS}') if verbose else None
         population = run_experiment(population)
