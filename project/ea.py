@@ -12,7 +12,7 @@ K = 20
 SEED = 42
 POP_SIZE = 100
 TABLE_SIZE = (16*10)+(8*10)+(10*10) #360
-MU = 3 / TABLE_SIZE
+MU = 10 / TABLE_SIZE
 MAX_GENS = 250
 NR_ROUNDS = 100000
 CROSSOVER = True
@@ -163,6 +163,7 @@ def mutate(agent):
 crossover = crossover_quadrants
 
 def evolutionary_algorithm(verbose=True):
+    global MU
     # Step 1: Population of candidate solutions
     population = initialise_population()
     # Repeat steps 2-4
@@ -170,8 +171,11 @@ def evolutionary_algorithm(verbose=True):
     # Keep track of fitest agents
     fitness_over_gen = []
     #run for set amount of generations
-    print("Using " + str(mp.cpu_count() - 2) + " cores out of a total of " + str(mp.cpu_count()) + " present on this machine.")
     print("Running for " + str(MAX_GENS) + " generations with " + str(POP_SIZE) + " agents each with " + str(NR_ROUNDS) + " epochs each.")
+    mu_start = 10
+    mu_end = 1
+    mu_decrement = (mu_start - mu_end) / MAX_GENS
+    MU = 10 / TAB
     while i < MAX_GENS:
         print(f'Generation {i+1}/{MAX_GENS}') if verbose else None
         population = run_experiment(population)
@@ -192,6 +196,7 @@ def evolutionary_algorithm(verbose=True):
         else:
             population = new_population.copy()
         i += 1
+        MU = (mu_start - i*mu_decrement) / TABLE_SIZE
     population = run_experiment(population)
     fitness_over_gen.append(find_fittest(population))
     return fitness_over_gen
@@ -273,7 +278,8 @@ def test_different_mu():
 
 def main():
     random.seed(SEED)
-    test_different_mu()
+    # test_different_mu()
+    run_single_algorithm()
 
 if __name__ == '__main__':
     main()
