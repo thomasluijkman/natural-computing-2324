@@ -3,6 +3,8 @@ from enum import Enum
 from game import Hand, Card, Blackjack, GameState, Actions, sum_gamestates
 import random
 
+TABLE_SIZE = (16*10)+(8*10)+(10*10) #360
+
 class Agent:
     def __init__(self, decision_tables=None):
         self.money = 500
@@ -153,7 +155,7 @@ class DecisionTables():
         table = self.tables[LOOKUP_PAIR]
         if (len(table) == 0) or (len(table[0]) == 0):
             print("Table is empty!")
-        hand_states = ["(2 ,2 )", "(3 ,3 )", "(4 ,4 )", "(5 ,5 )", "(6 ,6 )", "(7 ,7 )", "(8 ,8 )", "(9 ,9 )", "(10,10)", "(A ,A )"]
+        hand_states = ["(A ,A )","(2 ,2 )", "(3 ,3 )", "(4 ,4 )", "(5 ,5 )", "(6 ,6 )", "(7 ,7 )", "(8 ,8 )", "(9 ,9 )", "(10,10)"]
         table_string = "        | A  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10  \n"
         table_string += ("-" * (len(table[0]) * 5 + 8)) + "\n"
         for j, row in enumerate(table):

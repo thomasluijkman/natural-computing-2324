@@ -1,4 +1,4 @@
-from agent import Agent, DecisionTables, LOOKUP_ACE, LOOKUP_PAIR, LOOKUP_REGULAR
+from agent import Agent, DecisionTables, LOOKUP_ACE, LOOKUP_PAIR, LOOKUP_REGULAR, TABLE_SIZE
 from game import Actions
 import random
 import sys
@@ -11,7 +11,6 @@ import multiprocessing as mp
 K = 20
 SEED = 42
 POP_SIZE = 100
-TABLE_SIZE = (16*10)+(8*10)+(10*10) #360
 MU = 10 / TABLE_SIZE
 MAX_GENS = 250
 NR_ROUNDS = 100000
