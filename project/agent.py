@@ -2,41 +2,59 @@ import numpy as np
 from enum import Enum
 from game import Hand, Card, Blackjack, GameState, Actions, sum_gamestates
 import random
+from known_strat import regular_table_known, ace_table_known, pair_table_known
+import pickle
 
 TABLE_SIZE = (16*10)+(8*10)+(10*10) #360
+MAX_BET = 100
 
 class Agent:
-    def __init__(self, decision_tables=None):
-        self.money = 500
+    def __init__(self, nr_rounds, decision_tables=None, betting_table=None):
+        self.money = nr_rounds * MAX_BET * 2
         self.score = 0
+        self.nr_rounds = nr_rounds
         if decision_tables is None:
             self.decision_tables = DecisionTables()
         elif isinstance(decision_tables, list):
             self.decision_tables = DecisionTables(all_tables=decision_tables)
         else:
             self.decision_tables = decision_tables 
+        if betting_table is None:
+            self.betting_table = BettingTable()
+        else:
+            self.betting_table = BettingTable(betting_table)
         
-    def getAgentFitness(self, nr_rounds):
-        return self.score / nr_rounds
+    def getAgentFitness(self):
+        return self.score / self.nr_rounds
+    
+    def getAgentFitnessMoney(self):
+        return self.money / self.nr_rounds
+
     
     def getAgentStrategy(self):
         return self.decision_tables
 
-    def playGame(self, nr_rounds):
+    def playGame(self):
         self.score = 0
+        card_count = 0
         game = Blackjack() # create an instance
-        for i in range(nr_rounds):
+        for i in range(self.nr_rounds):
+            bet = self.betting_table.lookupBet(card_count=card_count)
             (player_hands, dealer_hand) = game.startGame() # initialise the game: deal initial cards to dealer and agent, player_hands == list of hands
             while player_hands != [] and any(isinstance(ph, Hand) for ph in player_hands): 
                 for hand_index, player_hand in enumerate(player_hands): # for each player hand -> select action and play the round
                     if isinstance(player_hand, GameState):
                         continue
+                    # print(player_hand)
                     action = self.decision_tables.lookupAction(player_hand, dealer_hand)
                     game.agentAction(hand_index, action) # Send selected action to the game, the game should act on the action and change the hand
                     # Additionally, game should check if the state is winning/loosing and change the hands list value to GameState value 
                 player_hands = game.getAllAgentHands() # Returns int score if game is finished otherwise hand i.e. [Hand1, 1, hand3]
             round_score = sum_gamestates(player_hands) # Update the score
             self.score += round_score
+            card_count = game.getCardCount()
+            for score in player_hands:
+                self.money += score.value * bet
 
     def __str__(self):
         return str(self.decision_tables)
@@ -46,6 +64,54 @@ LOOKUP_REGULAR = 0
 LOOKUP_ACE     = 1
 LOOKUP_PAIR    = 2
 
+class BettingTable():
+    def __init__(self, betting_table = None):
+        if betting_table is None:
+            # >=30 29-25 24-20 19-15 14-10 9-5 4-1 0 -1-(-4) -5-(-9) -10-(-14) -15-(-19) -20-(-24) -25-(-29) <=(-30)
+            self.bets = np.zeros(15)
+            self.bets.fill(50)
+        else:
+            self.bets = betting_table
+
+    def lookupBet(self, card_count):
+        match card_count:
+            case count if count >= 30:
+                return self.bets[0]
+            case count if 25 <= count <= 29:
+                return self.bets[1]
+            case count if 20 <= count <= 24:
+                return self.bets[2]
+            case count if 15 <= count <= 19:
+                return self.bets[3]
+            case count if 10 <= count <= 14:
+                return self.bets[4]
+            case count if 5 <= count <= 9:
+                return self.bets[5]
+            case count if 1 <= count <= 4:
+                return self.bets[6]
+            case 0:
+                return self.bets[7]
+            case count if -4 <= count <= -1:
+                return self.bets[8]
+            case count if -9 <= count <= -5:
+                return self.bets[9]
+            case count if -14 <= count <= -10:
+                return self.bets[10]
+            case count if -19 <= count <= -15:
+                return self.bets[11]
+            case count if -24 <= count <= -20:
+                return self.bets[12]
+            case count if -29 <= count <= -25:
+                return self.bets[13]
+            case count if count <= -30:
+                return self.bets[14]
+            case _:
+                print("error bet lookup; card count is: " + str(card_count))
+
+    def updateBetCell(self, pos, new_bet):
+        self.bets[pos] = new_bet
+
+   
 class DecisionTables():
     def __init__(self, lookup_table_regular=None, lookup_table_ace=None, lookup_table_pair=None, all_tables=None):
         self.tables = []
@@ -75,6 +141,8 @@ class DecisionTables():
         return self.tables
 
     def lookupAction(self, agent_hand, dealer_hand):
+        if agent_hand.scoreHand() == 21:
+            return Actions.ST
         # Include special case for J, Q and K
         if dealer_hand.hand[0].rank >= 10:
             y = 9
@@ -181,10 +249,19 @@ class DecisionTables():
         string += "Pair Table:" + "\n"
         string += self.str_pair_table()
         return string
+    
+def save_agent_to_file(agent, filename_pickle):
+    with open(filename_pickle, 'wb') as file:
+        pickle.dump(agent, file) # Pickling in case we want to run experiments on the best agent.
 
 if __name__ == "__main__":
-    agent = Agent()
+    known_strat = DecisionTables(lookup_table_regular=regular_table_known,lookup_table_ace=ace_table_known, lookup_table_pair=pair_table_known)
+    agent = Agent(100000, decision_tables=known_strat)
     agent.decision_tables.printTables()
+    agent.playGame()
     print(agent.getAgentFitness())
-    agent.playGame(200)
-    print(agent.getAgentFitness())
+    save_agent_to_file(agent, "known_strat_agent.pkl")
+
+    # betting_table = BettingTable()
+    # print(betting_table.bets)
+

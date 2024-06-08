@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 import time
 import pickle
 import multiprocessing as mp
+from known_strat import regular_table_known, ace_table_known, pair_table_known
 
-K = 20
+K = 5
 SEED = 42
 POP_SIZE = 10
-MU = 10 / TABLE_SIZE
-MAX_GENS = 2
+MU = 0.1
+MAX_GENS = 20
 NR_ROUNDS = 10000
 CROSSOVER = True
 
@@ -23,8 +24,9 @@ CROSSOVER = True
 # Create population with random agents
 def initialise_population():
     population = []
+    known_strat = DecisionTables(lookup_table_regular=regular_table_known,lookup_table_ace=ace_table_known, lookup_table_pair=pair_table_known)
     for _ in range(POP_SIZE):
-        population.append(Agent(NR_ROUNDS))
+        population.append(Agent(NR_ROUNDS, decision_tables=known_strat))
     return population
 
 def play_game(agent):
@@ -40,7 +42,7 @@ def run_experiment(population):
 def calc_population_fitness(population):
     pop_fitness = []
     for individual in population:
-        pop_fitness.append(individual.getAgentFitness())
+        pop_fitness.append(individual.getAgentFitnessMoney())
     return pop_fitness
 
 # Returns the two best individuals from a random selection of [K] individuals in the population
@@ -56,101 +58,26 @@ def find_fittest(population):
     highest = -sys.maxsize - 1
     best_agent = None
     for agent in population:
-        fitness = agent.getAgentFitness()
+        fitness = agent.getAgentFitnessMoney()
         if fitness > highest:
             highest = fitness
             best_agent = agent
     return best_agent, highest
         
-def crossover_rows(a, b):
-    a_tables = a.decision_tables.getAllTables()
-    b_tables = b.decision_tables.getAllTables()
-
-    child1_tables = []
-    child2_tables = []
-
-    for (table_a, table_b) in list(zip(a_tables, b_tables)):
-        # Get the dimensions of the arrays
-        rows, cols = table_a.shape
-
-        # Randomly select the row index for crossover
-        crossover_point = random.randint(1, rows-2)
-
-        # Initialize an empty array to store the result
-        child1_table = np.empty((rows, cols), dtype=table_a.dtype)
-        child2_table = np.empty((rows, cols), dtype=table_a.dtype)
-
-        # Copy rows from array a and b based on the crossover point
-        child1_table[:crossover_point, :] = table_a[:crossover_point, :]
-        child1_table[crossover_point:, :] = table_b[crossover_point:, :]
-
-        child2_table[:crossover_point, :] = table_b[:crossover_point, :]
-        child2_table[crossover_point:, :] = table_a[crossover_point:, :]
-
-        child1_tables.append(child1_table)
-        child2_tables.append(child2_table)
-
-    child1 = Agent(NR_ROUNDS,decision_tables=DecisionTables(all_tables=child1_tables))
-    child2 = Agent(NR_ROUNDS,decision_tables=DecisionTables(all_tables=child2_tables))
-
-    return [child1, child2]
-
-def crossover_quadrants(a, b):
-    a_tables = a.decision_tables.getAllTables()
-    b_tables = b.decision_tables.getAllTables()
-
-    child1_tables = []
-    child2_tables = []
-
-    for (table_a, table_b) in list(zip(a_tables, b_tables)):
-        rows, cols = table_a.shape
-
-        c_row = random.randint(1, rows-2)
-        c_col = random.randint(1, cols-2)
-
-        # Initialize an empty array to store the result
-        child1_table = np.empty((rows, cols), dtype=table_a.dtype)
-        child2_table = np.empty((rows, cols), dtype=table_b.dtype)
-
-        # Copy the children from four quadrants
-        # # Quadrant 1
-        child1_table[:c_row, :c_col] = table_a[:c_row, :c_col]
-        child2_table[:c_row, :c_col] = table_b[:c_row, :c_col]
-
-        # # Quadrant 2
-        child1_table[c_row:, :c_col] = table_b[c_row:, :c_col]
-        child2_table[c_row:, :c_col] = table_a[c_row:, :c_col]
-
-        # # Quadrant 3
-        child1_table[:c_row, c_col:] = table_a[:c_row, c_col:]
-        child2_table[:c_row, c_col:] = table_b[:c_row, c_col:]
-
-        # # Quadrant 4
-        child1_table[c_row:, c_col:] = table_b[c_row:, c_col:]
-        child2_table[c_row:, c_col:] = table_a[c_row:, c_col:]
-
-        child1_tables.append(child1_table)
-        child2_tables.append(child2_table)
-
-    child1 = Agent(NR_ROUNDS,decision_tables=DecisionTables(all_tables=child1_tables))
-    child2 = Agent(NR_ROUNDS,decision_tables=DecisionTables(all_tables=child2_tables))
-
-    return [child1, child2]
-
+def crossover(a, b):
+    cross_point = random.randrange(len(a.betting_table.bets))
+    child_a_bets = np.concatenate((a.betting_table.bets[:cross_point], b.betting_table.bets[cross_point:]))
+    child_b_bets = np.concatenate((b.betting_table.bets[:cross_point], a.betting_table.bets[cross_point:]))
+    child_a = Agent(NR_ROUNDS, a.decision_tables, child_a_bets)
+    child_b = Agent(NR_ROUNDS, b.decision_tables, child_b_bets)
+    return [child_a, child_b]
 
 def mutate(agent):
-    tables = agent.decision_tables.getAllTables()
-    for table_num, table in enumerate(tables):
-        for x_pos, x in enumerate(table):
-            for y_pos, y in enumerate(x):
-                if random.random() <= MU:
-                    if table_num == LOOKUP_PAIR: # If pairs table
-                        new_action = random.choice(list(Actions))
-                    else:
-                        new_action = random.choice([Actions.HT,Actions.ST, Actions.DH, Actions.DS])
-                    tables[table_num][x_pos][y_pos] = new_action
-    new_agent = Agent(NR_ROUNDS,tables)
-    return new_agent
+    for index, cell in enumerate(agent.betting_table.bets):
+        if random.random() <= MU:
+            new_bet = random.randint(1, 100)
+            agent.betting_table.updateBetCell(index, new_bet)
+    return agent
 
 def evolutionary_algorithm(verbose=True):
     global MU
@@ -162,10 +89,6 @@ def evolutionary_algorithm(verbose=True):
     fitness_over_gen = []
     #run for set amount of generations
     print("Running for " + str(MAX_GENS) + " generations with " + str(POP_SIZE) + " agents each with " + str(NR_ROUNDS) + " epochs each.")
-    mu_start = 10
-    mu_end = 1
-    mu_decrement = (mu_start - mu_end) / MAX_GENS
-    MU = 10 / TABLE_SIZE
     while i < MAX_GENS:
         print(f'Generation {i+1}/{MAX_GENS}') if verbose else None
         population = run_experiment(population)
@@ -186,7 +109,6 @@ def evolutionary_algorithm(verbose=True):
         else:
             population = new_population.copy()
         i += 1
-        MU = (mu_start - i*mu_decrement) / TABLE_SIZE
     population = run_experiment(population)
     fitness_over_gen.append(find_fittest(population))
     return fitness_over_gen
@@ -209,35 +131,13 @@ def save_agent_to_file(agent, filename_txt, filename_pickle):
 def run_single_algorithm():
     agent_fitness_pairs = evolutionary_algorithm()
     agents, fitnesses = zip(*agent_fitness_pairs)
-    print(f'Fittest agent: {fitnesses[-1]}\nDecision tables: {str(agents[-1])}')
+    
+    print(f'Fittest agent: {agents[-1].betting_table.bets}')
 
     # Save the last agent to a text file
-    save_agent_to_file(agents[-1], "results/best_agent_table.txt", "results/best_agent.pkl")
+    # save_agent_to_file(agents[-1], "results/best_agent_table.txt", "results/best_agent.pkl")
 
-    plot_fitness_over_generations(fitnesses)
-
-def test_crossovers():
-    def test_crossover_func(function, fun_name):
-        global crossover
-        crossover = function
-        crossover_result = []
-        for i in range(10):
-            print(f'Testing iteration {i+1} of 10 with crossover function {fun_name}')
-            print(f'Started current test at {time.strftime("%H:%M:%S",time.localtime())}')
-            agent_fitness_pairs = evolutionary_algorithm(verbose=True)
-            _, fitnesses = zip(*agent_fitness_pairs)
-            avg_over_five = np.average(fitnesses[-5:])
-            crossover_result.append(avg_over_five)
-        return crossover_result
-    
-    rows_result = test_crossover_func(crossover_rows, 'crossover_rows')
-    quad_result = test_crossover_func(crossover_quadrants, 'crossover_quadrants')
-
-    with open('crossover_test_result.txt', 'w+') as f:
-        f.write('ROWS TEST RESULT:\n')
-        f.write(str(rows_result) + '\n')
-        f.write('QUADRANTS TEST RESULT:\n')
-        f.write(str(quad_result) + '\n')
+    # plot_fitness_over_generations(fitnesses)
 
 def test_different_mu():
     global MU

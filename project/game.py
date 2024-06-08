@@ -66,14 +66,19 @@ class Card:
             case 13: rank = "K"
             case _:  rank = str(self.rank)
         return suit+rank
-    
+
+    #Revere point count
     def count(self):
-        if self.rank <= 6:
+        if any([self.rank == 1, self.rank >= 10]): #Ace or 10 or face cards
+            return -2
+        elif any([self.rank == 2, self.rank == 7]): # 2 or 7
             return 1
-        if self.rank >= 7 and self.rank <= 9:
+        elif self.rank in range(3,7): #3-6
+            return 2
+        elif self.rank in range(8,10): #8-9
             return 0
-        if self.rank >= 10:
-            return -1
+        print("something going wrong rank count: " + str(self.rank))
+        return 0
 
 class Hand:
     def __init__(self, hand=[]):
@@ -166,14 +171,18 @@ class Blackjack:
         self.dealer_hand = Hand()
         if self.dealer_reshuffle:
             self.shuffleDeck()
-            self.count = 0
         self.player_hands.append(Hand([self.drawCard(), self.drawCard()]))
         self.dealer_hand = Hand([self.drawCard(), self.drawCard()])
-        if self.dealer_hand.isBlackjack():
+        if all([self.dealer_hand.isBlackjack(), self.player_hands[0].isBlackjack()]):
+            self.player_hands = [GameState.Agent_draw]
+        elif self.dealer_hand.isBlackjack():
             self.player_hands = [GameState.Dealer_won]
         elif self.player_hands[0].isBlackjack():
             self.player_hands = [GameState.Agent_won]
         return (self.player_hands, self.dealer_hand)
+    
+    def getCardCount(self):
+        return self.count
     
     def shuffleDeck(self):
         deck = []
@@ -183,6 +192,7 @@ class Blackjack:
         random.shuffle(self.shoe)
         self.shoe = self.shoe[:-20] + [RESHUFFLE_CARD] + self.shoe[-20:]
         self.dealer_reshuffle = False
+        self.count = 0
 
     def getAllAgentHands(self):
         return self.player_hands
@@ -229,11 +239,6 @@ class Blackjack:
         self.player_hands[hand_index].addCard(drawn)
         if self.player_hands[hand_index].isBust():
             self.player_hands[hand_index] = GameState.Dealer_won
-        elif self.player_hands[hand_index].scoreHand() == 21:
-            if self.player_hands[hand_index].doubled:
-                self.player_hands[hand_index] = GameState.Agent_won_doubledown
-            else:
-                self.player_hands[hand_index] = GameState.Agent_won
    
     def agentStands(self, hand_index):
         self.dealerDrawsUntil17()
@@ -293,10 +298,11 @@ class Blackjack:
         if drawn == RESHUFFLE_CARD:
             self.dealer_reshuffle = True
             drawn = self.drawCard()
-        self.count += drawn.count()
+            self.count += drawn.count()
         return drawn
     
-    def payout(self, verbose=False):
+    
+    def payout_interactive(self, verbose=False):
         player_score = self.player_hand.scoreHand()
         dealer_score = self.dealer_hand.scoreHand()
 
@@ -401,7 +407,7 @@ class Blackjack:
                     playing = False
             
             # Payout
-            self.payout(verbose=True)
+            self.payout_interactive(verbose=True)
             self.resetRound()
             rounds += 1
             print('')
@@ -410,6 +416,7 @@ class Blackjack:
     def __str__(self):
         string = "Game state:\n" + str([str(card) for card in self.deck])
         return string
+    
     
 class SplitError(Exception):
     def __init__(self, message="Player attempted to split non-splittable hand."):
