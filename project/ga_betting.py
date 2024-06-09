@@ -9,14 +9,15 @@ import pickle
 import multiprocessing as mp
 from known_strat import regular_table_known, ace_table_known, pair_table_known
 
-K = 5
+K = 4
 SEED = 42
-POP_SIZE = 10
+POP_SIZE = 50
 MU = 0.1
 SIGMA = 4
-MAX_GENS = 20
-NR_ROUNDS = 10000
+MAX_GENS = 250
+NR_ROUNDS = 50000
 CROSSOVER = True
+BET_TABLE_SIZE = 15
 
 ########################################
 # Functions for evolutionary algorithm #
@@ -147,8 +148,8 @@ def test_different_mu():
 
     mus = []
     fitness_per_mu = []
-    for i in np.arange(1, 10, 1):
-        MU = i/TABLE_SIZE
+    for i in np.arange(1, 11, 1):
+        MU = i/BET_TABLE_SIZE
         print(f'Testing with MU = {MU}')
         mus.append(i)
         agent_fitness_pairs = evolutionary_algorithm(verbose=False)
@@ -173,7 +174,8 @@ def main():
     random.seed(SEED)
     np.random.seed(SEED)
     # test_different_mu()
-    run_single_algorithm()
+    # run_single_algorithm()
+    test_different_mu()
 
 if __name__ == '__main__':
     main()

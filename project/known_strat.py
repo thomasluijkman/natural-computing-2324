@@ -44,7 +44,7 @@ pair_table_strat = {
     (9, 0): Actions.ST, (9, 1): Actions.ST, (9, 2): Actions.ST, (9, 3): Actions.ST, (9, 4): Actions.ST, (9, 5): Actions.ST, (9, 6): Actions.ST, (9, 7): Actions.ST, (9, 8): Actions.ST, (9, 9): Actions.ST,  # 10
 }
 
-
+# Move ace to front intstead of back
 def move_last_column_to_front(table):
     return np.roll(table, 1, axis=1)
 
