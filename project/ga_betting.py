@@ -1,5 +1,5 @@
 from agent import Agent, DecisionTables, LOOKUP_ACE, LOOKUP_PAIR, LOOKUP_REGULAR, TABLE_SIZE
-from game import Actions
+from game import Actions, MIN_BET, MAX_BET
 import random
 import sys
 import numpy as np
@@ -13,6 +13,7 @@ K = 5
 SEED = 42
 POP_SIZE = 10
 MU = 0.1
+SIGMA = 4
 MAX_GENS = 20
 NR_ROUNDS = 10000
 CROSSOVER = True
@@ -73,9 +74,11 @@ def crossover(a, b):
     return [child_a, child_b]
 
 def mutate(agent):
-    for index, cell in enumerate(agent.betting_table.bets):
+    for index, bet in enumerate(agent.betting_table.bets):
         if random.random() <= MU:
-            new_bet = random.randint(1, 100)
+            new_bet = bet + np.random.normal(loc=0, scale=SIGMA)
+            new_bet = max(MIN_BET, new_bet)
+            new_bet = min(MAX_BET, new_bet)
             agent.betting_table.updateBetCell(index, new_bet)
     return agent
 
@@ -168,6 +171,7 @@ def test_different_mu():
 
 def main():
     random.seed(SEED)
+    np.random.seed(SEED)
     # test_different_mu()
     run_single_algorithm()
 

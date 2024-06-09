@@ -298,7 +298,7 @@ class Blackjack:
         if drawn == RESHUFFLE_CARD:
             self.dealer_reshuffle = True
             drawn = self.drawCard()
-            self.count += drawn.count()
+        self.count += drawn.count()
         return drawn
     
     

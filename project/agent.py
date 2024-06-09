@@ -30,7 +30,6 @@ class Agent:
     def getAgentFitnessMoney(self):
         return self.money / self.nr_rounds
 
-    
     def getAgentStrategy(self):
         return self.decision_tables
 
