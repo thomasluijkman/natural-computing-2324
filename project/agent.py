@@ -52,6 +52,7 @@ class Agent:
             round_score = sum_gamestates(player_hands) # Update the score
             self.score += round_score
             card_count = game.getCardCount()
+            print(card_count)
             for score in player_hands:
                 self.money += score.value * bet
 
@@ -68,7 +69,7 @@ class BettingTable():
         if betting_table is None:
             # >=30 29-25 24-20 19-15 14-10 9-5 4-1 0 -1-(-4) -5-(-9) -10-(-14) -15-(-19) -20-(-24) -25-(-29) <=(-30)
             self.bets = np.zeros(15)
-            self.bets.fill(50)
+            self.bets = np.random.randint(1, 100, size=15)
         else:
             self.bets = betting_table
 

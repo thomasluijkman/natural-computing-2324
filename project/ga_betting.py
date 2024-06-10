@@ -11,7 +11,7 @@ from known_strat import regular_table_known, ace_table_known, pair_table_known
 
 K = 4
 SEED = 42
-POP_SIZE = 50
+POP_SIZE = 1
 MU = 0.1
 SIGMA = 4
 MAX_GENS = 250
