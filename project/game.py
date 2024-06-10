@@ -147,7 +147,7 @@ class Blackjack:
         Dealer variables:
         - dealer_hand (Hand)
         - dealer_reshuffle (bool): true if the dealer should reshuffle at the end of the round"""
-    def __init__(self, no_decks=1):
+    def __init__(self, no_decks=6):
         # Initialise deck for the game
         self.no_decks = no_decks
         self.shuffleDeck()
@@ -190,9 +190,10 @@ class Blackjack:
             deck += self.newDeck()
         self.shoe = deck
         random.shuffle(self.shoe)
-        self.shoe = self.shoe[:-20] + [RESHUFFLE_CARD] + self.shoe[-20:]
+        self.shoe = self.shoe[:20] + [RESHUFFLE_CARD] + self.shoe[20:]
         self.dealer_reshuffle = False
         self.count = 0
+        self.played = []
 
     def getAllAgentHands(self):
         return self.player_hands
@@ -295,7 +296,9 @@ class Blackjack:
         drawn = self.shoe[-1]
         self.shoe = self.shoe[:-1]
         self.played.append(drawn)
+        # print(len(self.played))
         if drawn == RESHUFFLE_CARD:
+            # print(len(self.played))
             self.dealer_reshuffle = True
             drawn = self.drawCard()
         self.count += drawn.count()
