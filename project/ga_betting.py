@@ -12,12 +12,12 @@ from known_strat import regular_table_known, ace_table_known, pair_table_known
 K = 4
 SEED = 42
 POP_SIZE = 1
-MU = 0.1
 SIGMA = 4
 MAX_GENS = 250
 NR_ROUNDS = 50000
 CROSSOVER = True
 BET_TABLE_SIZE = 15
+MU = 4/BET_TABLE_SIZE
 
 ########################################
 # Functions for evolutionary algorithm #
@@ -139,9 +139,9 @@ def run_single_algorithm():
     print(f'Fittest agent: {agents[-1].betting_table.bets}')
 
     # Save the last agent to a text file
-    # save_agent_to_file(agents[-1], "results/best_agent_table.txt", "results/best_agent.pkl")
+    save_agent_to_file(agents[-1], "results/best_agent_table.txt", "results/best_agent.pkl")
 
-    # plot_fitness_over_generations(fitnesses)
+    plot_fitness_over_generations(fitnesses)
 
 def test_different_mu():
     global MU
@@ -174,8 +174,8 @@ def main():
     random.seed(SEED)
     np.random.seed(SEED)
     # test_different_mu()
-    # run_single_algorithm()
-    test_different_mu()
+    run_single_algorithm()
+    # test_different_mu()
 
 if __name__ == '__main__':
     main()

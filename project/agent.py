@@ -52,7 +52,7 @@ class Agent:
             round_score = sum_gamestates(player_hands) # Update the score
             self.score += round_score
             card_count = game.getCardCount()
-            print(card_count)
+            # print(card_count)
             for score in player_hands:
                 self.money += score.value * bet
 
