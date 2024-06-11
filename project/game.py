@@ -295,6 +295,8 @@ class Blackjack:
     def drawCard(self):
         """Takes the last card (the top card) from the deck and returns it.
            Also adds this card to the played deck."""
+        if len(self.shoe) == 0:
+            self.shuffleDeck()
         drawn = self.shoe[-1]
         self.shoe = self.shoe[:-1]
         self.played.append(drawn)
@@ -423,6 +425,10 @@ class Blackjack:
     
 class SplitError(Exception):
     def __init__(self, message="Player attempted to split non-splittable hand."):
+        super().__init__(message)
+
+class EmptyDeckError(Exception):
+    def __init__(self, message="Game attempted to draw from an empty deck."):
         super().__init__(message)
     
 if __name__ == "__main__":
