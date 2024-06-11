@@ -152,6 +152,8 @@ def mutate(agent):
     new_agent = Agent(NR_ROUNDS,tables)
     return new_agent
 
+crossover = crossover_rows
+
 def evolutionary_algorithm(verbose=True):
     global MU
     # Step 1: Population of candidate solutions

@@ -44,10 +44,11 @@ class Agent:
                 for hand_index, player_hand in enumerate(player_hands): # for each player hand -> select action and play the round
                     if isinstance(player_hand, GameState):
                         continue
-                    # print(player_hand)
+                    print(f'---------\nPlayer hand: {player_hand}\nDealer hand: {dealer_hand.hand[0]}\nPlayer score: {player_hand.scoreHand()}')
                     action = self.decision_tables.lookupAction(player_hand, dealer_hand)
                     game.agentAction(hand_index, action) # Send selected action to the game, the game should act on the action and change the hand
                     # Additionally, game should check if the state is winning/loosing and change the hands list value to GameState value 
+                    print(f'Decision made: {action}')
                 player_hands = game.getAllAgentHands() # Returns int score if game is finished otherwise hand i.e. [Hand1, 1, hand3]
             round_score = sum_gamestates(player_hands) # Update the score
             self.score += round_score
@@ -156,7 +157,7 @@ class DecisionTables():
             else: 
                 x = agent_hand.hand[0].rank - 1
             return self.tables[LOOKUP_PAIR][x][y]
-        elif agent_hand.aces() > 0:
+        elif agent_hand.aces() > 0 and len(agent_hand.hand) == 2:
             #compute index 
             x = agent_hand.scoreHand() - 11 - 2 # minus ace - 2 for indexing
             return self.tables[LOOKUP_ACE][x][y]

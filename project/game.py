@@ -248,8 +248,10 @@ class Blackjack:
     def defineIfAgentWon(self, hand_index):
         player_score = self.player_hands[hand_index].scoreHand()
         dealer_score = self.dealer_hand.scoreHand()
-        if player_score > 21:
+        if self.player_hands[hand_index].isBust():
             self.player_hands[hand_index] = GameState.Dealer_won_doubledown if self.player_hands[hand_index].doubled else GameState.Dealer_won
+        elif self.dealer_hand.isBust():
+            self.player_hands[hand_index] = GameState.Agent_won_doubledown if self.player_hands[hand_index].doubled else GameState.Agent_won
         elif player_score < dealer_score:
             self.player_hands[hand_index] = GameState.Dealer_won_doubledown if self.player_hands[hand_index].doubled else GameState.Dealer_won
         elif player_score == dealer_score:
@@ -296,9 +298,7 @@ class Blackjack:
         drawn = self.shoe[-1]
         self.shoe = self.shoe[:-1]
         self.played.append(drawn)
-        # print(len(self.played))
         if drawn == RESHUFFLE_CARD:
-            # print(len(self.played))
             self.dealer_reshuffle = True
             drawn = self.drawCard()
         self.count += drawn.count()
