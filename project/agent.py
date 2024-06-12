@@ -28,7 +28,7 @@ class Agent:
         return self.score / self.nr_rounds
     
     def getAgentFitnessMoney(self):
-        return self.money / self.nr_rounds
+        return ((self.money / self.nr_rounds) - 200)
 
     def getAgentStrategy(self):
         return self.decision_tables

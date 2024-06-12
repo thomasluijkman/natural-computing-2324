@@ -10,11 +10,12 @@ import multiprocessing as mp
 
 K = 20
 SEED = 42
-POP_SIZE = 10
-MU = 10 / TABLE_SIZE
-MAX_GENS = 2
-NR_ROUNDS = 10000
-CROSSOVER = True
+POP_SIZE = 100
+MU = 4 / TABLE_SIZE
+MAX_GENS = 250
+NR_ROUNDS = 100000
+CROSSOVER = 0.8
+MUTATION_CHANCE = 0.8
 
 ########################################
 # Functions for evolutionary algorithm #
@@ -180,10 +181,10 @@ def evolutionary_algorithm(verbose=True):
             # Step 3: Select parents for new generation
             parents = get_parents_with_fitness(pop_with_fitness)
             # Step 4a: Introduce variation via crossover
-            new_population += crossover(parents[0], parents[1]) if CROSSOVER else parents
+            new_population += crossover(parents[0], parents[1]) if CROSSOVER >= random.random() else parents
         assert(len(new_population) == POP_SIZE)
         # Step 4b: Introduce variation via mutation
-        if MU > 0:
+        if MUTATION_CHANCE >= random.random():
             population = [mutate(individual) for individual in new_population]
         else:
             population = new_population.copy()

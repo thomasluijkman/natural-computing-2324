@@ -9,15 +9,16 @@ import pickle
 import multiprocessing as mp
 from known_strat import regular_table_known, ace_table_known, pair_table_known
 
-K = 4
+K = 20
 SEED = 42
-POP_SIZE = 50
+POP_SIZE = 100
 SIGMA = 4
-MAX_GENS = 100
-NR_ROUNDS = 50000
+MAX_GENS = 40
+NR_ROUNDS = 300000
 CROSSOVER = True
 BET_TABLE_SIZE = 15
 MU = 4/BET_TABLE_SIZE
+CUR_STRAT = DecisionTables(lookup_table_regular=regular_table_known,lookup_table_ace=ace_table_known, lookup_table_pair=pair_table_known)
 
 ########################################
 # Functions for evolutionary algorithm #
@@ -170,12 +171,45 @@ def test_different_mu():
     plt.grid(True)
     plt.savefig('results/fitness-different-mu.png')
 
+def test_different_agents():
+    # Known strat
+    known_fitnesses = []
+    agent_fitness_pairs = evolutionary_algorithm(verbose=False)
+    agents, fitnesses = zip(*agent_fitness_pairs)
+    best_agent = max(agent_fitness_pairs, key=lambda item: item[1])[0]
+    print(f'Fittest agent (known strat): {best_agent.betting_table.bets}')
+    known_fitnesses.extend(fitnesses)
+
+    with open('results/best_agent_mu5.pkl', 'rb') as f:
+        our_agent = pickle.load(f)
+    global CUR_STRAT
+    CUR_STRAT = our_agent.getAgentStrategy()
+    print(CUR_STRAT)
+    # Our strat
+    our_fitnesses = []
+    agent_fitness_pairs = evolutionary_algorithm(verbose=False)
+    agents, fitnesses = zip(*agent_fitness_pairs)
+    best_agent = max(agent_fitness_pairs, key=lambda item: item[1])[0]
+    print(f'Fittest agent (our strat): {best_agent.betting_table.bets}')
+    our_fitnesses.extend(fitnesses)
+    
+    # Plotting
+    plt.plot(known_fitnesses, label='Known Strategy')
+    plt.plot(our_fitnesses, label='Our Strategy')
+    
+    plt.xlabel('Generations')
+    plt.ylabel('Fitness')
+    plt.legend(loc="lower right", ncol=2, bbox_to_anchor=(1.1,0))
+    plt.title('Fitness over generations with known and unknown strategies')
+    plt.grid(True)
+    plt.savefig('results/fitness-different-strat.png')
+
 def main():
     random.seed(SEED)
     np.random.seed(SEED)
     # test_different_mu()
-    run_single_algorithm()
-    # test_different_mu()
+    # run_single_algorithm()
+    test_different_agents()
 
 if __name__ == '__main__':
     main()

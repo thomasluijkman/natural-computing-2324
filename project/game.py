@@ -131,7 +131,7 @@ RESHUFFLE_CARD = Card(-1, -1)
 # BLACKJACK CLASS DEFINITION #
 ##############################
 MIN_BET = 2
-MAX_BET = 500
+MAX_BET = 100
 
 class Blackjack:
     """Blackjack class contains:
