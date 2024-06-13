@@ -14,8 +14,8 @@ POP_SIZE = 100
 MU = 4 / TABLE_SIZE
 MAX_GENS = 250
 NR_ROUNDS = 100000
-CROSSOVER = 0.8
-MUTATION_CHANCE = 0.8
+CROSSOVER = 1
+MUTATION_CHANCE = 1
 
 ########################################
 # Functions for evolutionary algorithm #

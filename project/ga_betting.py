@@ -11,10 +11,10 @@ from known_strat import regular_table_known, ace_table_known, pair_table_known
 
 K = 20
 SEED = 42
-POP_SIZE = 10
+POP_SIZE = 100
 SIGMA = 4
-MAX_GENS = 2
-NR_ROUNDS = 30
+MAX_GENS = 250
+NR_ROUNDS = 100000
 CROSSOVER = True
 BET_TABLE_SIZE = 15
 MU = 4/BET_TABLE_SIZE
@@ -180,7 +180,7 @@ def test_different_agents():
     print(f'Fittest agent (known strat): {best_agent.betting_table.bets}')
     known_fitnesses.extend(fitnesses)
 
-    with open('results/best_agent_mu5.pkl', 'rb') as f:
+    with open('results/best_agent_ours.pkl', 'rb') as f:
         our_agent = pickle.load(f)
     global CUR_STRAT
     CUR_STRAT = our_agent.getAgentStrategy()
@@ -237,8 +237,14 @@ def main():
     np.random.seed(SEED)
     # test_different_mu()
     # run_single_algorithm()
-    # test_different_agents()
-    test_different_deck_count()
+    test_different_agents()
+    # test_different_deck_count()
+    # with open('results/best_agent_ours.pkl', 'rb') as f:
+    #     our_agent = pickle.load(f)
+    # global CUR_STRAT
+    # print(CUR_STRAT)
+    # CUR_STRAT = our_agent.getAgentStrategy()
+    # print(CUR_STRAT)
 
 if __name__ == '__main__':
     main()

@@ -256,8 +256,10 @@ def save_agent_to_file(agent, filename_pickle):
         pickle.dump(agent, file) # Pickling in case we want to run experiments on the best agent.
 
 if __name__ == "__main__":
+    with open('results/best_agent_ours.pkl', 'rb') as f:
+        our_agent = pickle.load(f)
     known_strat = DecisionTables(lookup_table_regular=regular_table_known,lookup_table_ace=ace_table_known, lookup_table_pair=pair_table_known)
-    agent = Agent(100000, decision_tables=known_strat)
+    agent = Agent(10000000, decision_tables=our_agent.getAgentStrategy())
     agent.decision_tables.printTables()
     agent.playGame()
     print(agent.getAgentFitness())
