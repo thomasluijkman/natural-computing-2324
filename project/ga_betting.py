@@ -11,10 +11,10 @@ from known_strat import regular_table_known, ace_table_known, pair_table_known
 
 K = 20
 SEED = 42
-POP_SIZE = 100
+POP_SIZE = 10
 SIGMA = 4
-MAX_GENS = 40
-NR_ROUNDS = 300000
+MAX_GENS = 2
+NR_ROUNDS = 30
 CROSSOVER = True
 BET_TABLE_SIZE = 15
 MU = 4/BET_TABLE_SIZE
@@ -25,11 +25,11 @@ CUR_STRAT = DecisionTables(lookup_table_regular=regular_table_known,lookup_table
 ########################################
 
 # Create population with random agents
-def initialise_population():
+def initialise_population(nr_decks=6):
     population = []
     known_strat = DecisionTables(lookup_table_regular=regular_table_known,lookup_table_ace=ace_table_known, lookup_table_pair=pair_table_known)
     for _ in range(POP_SIZE):
-        population.append(Agent(NR_ROUNDS, decision_tables=known_strat))
+        population.append(Agent(NR_ROUNDS, decision_tables=known_strat, nr_decks=nr_decks))
     return population
 
 def play_game(agent):
@@ -84,7 +84,7 @@ def mutate(agent):
             agent.betting_table.updateBetCell(index, new_bet)
     return agent
 
-def evolutionary_algorithm(verbose=True):
+def evolutionary_algorithm(verbose=True, nr_decks=6):
     global MU
     # Step 1: Population of candidate solutions
     population = initialise_population()
@@ -204,12 +204,41 @@ def test_different_agents():
     plt.grid(True)
     plt.savefig('results/fitness-different-strat.png')
 
+def test_different_deck_count():
+    with open('results/best_agent_mu5.pkl', 'rb') as f:
+        our_agent = pickle.load(f)
+    global CUR_STRAT
+    CUR_STRAT = our_agent.getAgentStrategy()
+    decks = []
+    fitness_per_deck = []
+    for i in np.arange(2, 9, 2):
+        print(f'Testing with deck size = {i}')
+        decks.append(i)
+        agent_fitness_pairs = evolutionary_algorithm(verbose=False,nr_decks=i)
+        _, fitnesses = zip(*agent_fitness_pairs)
+        fitness_per_deck.append(fitnesses)
+    
+    iterations = len(decks)
+    i = 0
+    for fitnesses, deck in zip(fitness_per_deck, decks):
+        RED = 255*(i/iterations)/255
+        BLUE = 255*(1-(i/iterations))/255
+        plt.plot(fitnesses, label=f'#Decks = {deck}', color=(RED,0,BLUE))
+        i += 1
+    plt.xlabel('Generations')
+    plt.ylabel('Fitness')
+    plt.legend(loc="lower right", ncol=2, bbox_to_anchor=(1.1,0))
+    plt.title('Fitness over generations with multiple deck counts')
+    plt.grid(True)
+    plt.savefig('results/fitness-different-deck-counts.png')
+
 def main():
     random.seed(SEED)
     np.random.seed(SEED)
     # test_different_mu()
     # run_single_algorithm()
-    test_different_agents()
+    # test_different_agents()
+    test_different_deck_count()
 
 if __name__ == '__main__':
     main()

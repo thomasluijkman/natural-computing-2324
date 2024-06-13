@@ -9,10 +9,11 @@ TABLE_SIZE = (16*10)+(8*10)+(10*10) #360
 MAX_BET = 100
 
 class Agent:
-    def __init__(self, nr_rounds, decision_tables=None, betting_table=None):
+    def __init__(self, nr_rounds, decision_tables=None, betting_table=None, nr_decks=6):
         self.money = nr_rounds * MAX_BET * 2
         self.score = 0
         self.nr_rounds = nr_rounds
+        self.nr_decks = nr_decks
         if decision_tables is None:
             self.decision_tables = DecisionTables()
         elif isinstance(decision_tables, list):
@@ -28,15 +29,15 @@ class Agent:
         return self.score / self.nr_rounds
     
     def getAgentFitnessMoney(self):
-        return ((self.money / self.nr_rounds) - 200)
+        return ((self.money / self.nr_rounds) - 200) 
 
     def getAgentStrategy(self):
         return self.decision_tables
 
-    def playGame(self):
+    def playGame(self, nr_decks=6):
         self.score = 0
         card_count = 0
-        game = Blackjack() # create an instance
+        game = Blackjack(no_decks=nr_decks) # create an instance
         for i in range(self.nr_rounds):
             bet = self.betting_table.lookupBet(card_count=card_count)
             (player_hands, dealer_hand) = game.startGame() # initialise the game: deal initial cards to dealer and agent, player_hands == list of hands
